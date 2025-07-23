@@ -9,6 +9,14 @@ on:
         description: 'Version to publish (e.g., 4.0.1)'
         required: true
         default: ''
+      publish-capacitor:
+        description: 'Publish Capacitor plugin'
+        type: boolean
+        default: true
+      publish-cordova:
+        description: 'Publish Cordova plugin'
+        type: boolean
+        default: true
       dry-run:
         description: 'Dry run (no actual publishing)'
         type: boolean
@@ -66,13 +74,13 @@ jobs:
             dist/cordova/*.tgz
         
       - name: Publish Capacitor Plugin to NPM
-        if: github.event.inputs.dry-run != 'true'
+        if: github.event.inputs.dry-run != 'true' && github.event.inputs.publish-capacitor != 'false'
         run: cd dist/capacitor && npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       
       - name: Publish Cordova Plugin to NPM
-        if: github.event.inputs.dry-run != 'true'
+        if: github.event.inputs.dry-run != 'true' && github.event.inputs.publish-cordova != 'false'
         run: cd dist/cordova && npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -80,13 +88,16 @@ jobs:
       # Provide feedback at the end
       - name: Publication Status
         run: |
+          echo "Build and package creation completed"
+          
           if [[ "${{ github.event.inputs.dry-run }}" == "true" ]]; then
             echo "✅ Dry run completed - packages were created but not published"
             echo "Download the artifacts to inspect the packages"
           else
-            echo "✅ Packages successfully published to npm registry"
-          fi
-            echo "Download the artifacts to inspect the packages"
-          else
-            echo "✅ Packages successfully published to npm registry"
+            if [[ "${{ github.event.inputs.publish-capacitor }}" != "false" ]]; then
+              echo "✅ Capacitor plugin published to npm registry"
+            fi
+            if [[ "${{ github.event.inputs.publish-cordova }}" != "false" ]]; then
+              echo "✅ Cordova plugin published to npm registry"
+            fi
           fi
