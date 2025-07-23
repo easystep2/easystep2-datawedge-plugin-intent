@@ -56,8 +56,9 @@ jobs:
           cd dist/capacitor && npm pack
           cd ../cordova && npm pack
           
+      # Upload tarballs as artifacts for verification
       - name: Upload package tarballs
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: npm-packages
           path: |

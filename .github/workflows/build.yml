@@ -38,19 +38,19 @@ jobs:
           cd ../cordova && npm pack
           
       - name: Upload Capacitor artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: capacitor-plugin
           path: dist/capacitor
           
       - name: Upload Cordova artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: cordova-plugin
           path: dist/cordova
           
       - name: Upload Package tarballs
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: npm-packages
           path: |
