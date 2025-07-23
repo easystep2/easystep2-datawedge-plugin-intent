@@ -100,4 +100,3 @@ jobs:
       - name: Cordova Publish Status
         if: github.event.inputs.dry-run != 'true' && github.event.inputs.publish-cordova == 'true'
         run: echo "✅ Cordova plugin published to npm registry"
-          fi
