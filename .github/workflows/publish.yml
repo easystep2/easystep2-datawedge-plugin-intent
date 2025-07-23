@@ -77,6 +77,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           
+      # Provide feedback at the end
       - name: Publication Status
         run: |
           if [[ "${{ github.event.inputs.dry-run }}" == "true" ]]; then
@@ -85,7 +86,6 @@ jobs:
           else
             echo "✅ Packages successfully published to npm registry"
           fi
-            echo "✅ Dry run completed - packages were created but not published"
             echo "Download the artifacts to inspect the packages"
           else
             echo "✅ Packages successfully published to npm registry"
