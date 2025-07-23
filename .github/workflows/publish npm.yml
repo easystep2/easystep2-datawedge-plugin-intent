@@ -46,7 +46,6 @@ jobs:
         with:
           node-version: '20.x'
           registry-url: 'https://registry.npmjs.org'
-          cache: 'npm'
       
       - name: Install dependencies
         run: npm install
@@ -54,8 +53,15 @@ jobs:
       - name: Update version if provided
         if: github.event.inputs.version != ''
         run: |
-          npm version ${{ github.event.inputs.version }} --no-git-tag-version
-      
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "Current package version: $CURRENT_VERSION"
+          if [ "$CURRENT_VERSION" != "${{ github.event.inputs.version }}" ]; then
+            npm version ${{ github.event.inputs.version }} --no-git-tag-version
+            echo "Version updated to ${{ github.event.inputs.version }}"
+          else
+            echo "Version not changed (current version is already $CURRENT_VERSION)"
+          fi
+
       - name: Build TypeScript
         run: npm run build:ts
         
@@ -79,15 +85,27 @@ jobs:
             dist/capacitor/*.tgz
             dist/cordova/*.tgz
         
+      # Add debug step to show input values
+      - name: Debug workflow inputs
+        run: |
+          echo "Input values:"
+          echo "dry-run: '${{ github.event.inputs.dry-run }}'"
+          echo "publish-capacitor: '${{ github.event.inputs.publish-capacitor }}'"
+          echo "publish-cordova: '${{ github.event.inputs.publish-cordova }}'"
+
       - name: Publish Capacitor Plugin to NPM
-        if: github.event.inputs.dry-run != true && github.event.inputs.publish-capacitor != false
-        run: cd dist/capacitor && npm publish
+        if: ${{ github.event.inputs.dry-run != 'true' && github.event.inputs.publish-capacitor == 'true' }}
+        run: |
+          echo "Publishing Capacitor plugin..."
+          cd dist/capacitor && npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       
       - name: Publish Cordova Plugin to NPM
-        if: github.event.inputs.dry-run != true && github.event.inputs.publish-cordova != false
-        run: cd dist/cordova && npm publish
+        if: ${{ github.event.inputs.dry-run != 'true' && github.event.inputs.publish-cordova == 'true' }}
+        run: |
+          echo "Publishing Cordova plugin..."
+          cd dist/cordova && npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           
@@ -100,9 +118,9 @@ jobs:
         run: echo "✅ Dry run completed - packages were created but not published"
       
       - name: Capacitor Publish Status
-        if: github.event.inputs.dry-run != 'true' && github.event.inputs.publish-capacitor == 'true'
+        if: github.event.inputs.dry-run == 'false' && github.event.inputs.publish-capacitor == 'true'
         run: echo "✅ Capacitor plugin published to npm registry"
       
       - name: Cordova Publish Status
-        if: github.event.inputs.dry-run != 'true' && github.event.inputs.publish-cordova == 'true'
+        if: github.event.inputs.dry-run == 'false' && github.event.inputs.publish-cordova == 'true'
         run: echo "✅ Cordova plugin published to npm registry"
