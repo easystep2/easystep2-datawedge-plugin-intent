@@ -46,7 +46,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import static android.os.Environment.getExternalStorageDirectory;
 import static android.os.Environment.getExternalStorageState;
 
 public class IntentShim extends CordovaPlugin {
@@ -58,14 +57,36 @@ public class IntentShim extends CordovaPlugin {
     private CallbackContext onActivityResultCallbackContext = null;
 
     private Intent deferredIntent = null;
+    
+    // Permission request codes
+    private static final int PERMISSION_REQUEST_READ_STORAGE = 101;
 
     public IntentShim() {
-
+        // Default constructor
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        try {
+            unregisterAllBroadcastReceivers();
+        }
+        catch (IllegalArgumentException e) {
+            // This can happen if the receivers were already unregistered.
+            // It's safe to ignore.
+        }
+    }
+
+    @Override
     public boolean execute(String action, JSONArray args, final CallbackContext callbackContext) throws JSONException
     {
         Log.d(LOG_TAG, "Action: " + action);
+        
+        // Add a new action for checking and requesting permissions
+        if (action.equals("checkAndRequestPermissions")) {
+            return handleCheckAndRequestPermissions(callbackContext);
+        }
+        
         if (action.equals("startActivity") || action.equals("startActivityForResult"))
         {
             //  Credit: https://github.com/chrisekelley/cordova-webintent
@@ -156,7 +177,6 @@ public class IntentShim extends CordovaPlugin {
             }
 
             //  Add any specified Data Schemes
-            //  https://github.com/darryncampbell/darryncampbell-cordova-plugin-intent/issues/24
             JSONArray filterDataSchemes = obj.has("filterDataSchemes") ? obj.getJSONArray("filterDataSchemes") : null;
             if (filterDataSchemes != null && filterDataSchemes.length() > 0)
             {
@@ -169,10 +189,20 @@ public class IntentShim extends CordovaPlugin {
 
             BroadcastReceiver broadcastReceiver = newBroadcastReceiver();
 
-            this.cordova.getActivity().registerReceiver(broadcastReceiver, filter);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                // Android 13+: Use the RECEIVER_EXPORTED flag for explicit receivers
+                this.cordova.getActivity().registerReceiver(broadcastReceiver, filter, Context.RECEIVER_EXPORTED);
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                // Android 8.0+: Need to specify flags
+                this.cordova.getActivity().registerReceiver(broadcastReceiver, filter, null, null);
+            } else {
+                this.cordova.getActivity().registerReceiver(broadcastReceiver, filter);
+            }
+            
             receiverCallbacks.put(broadcastReceiver, callbackContext);
 
             callbackContext.sendPluginResult(result);
+            return true;
         }
         else if (action.equals("unregisterBroadcastReceiver"))
         {
@@ -311,61 +341,125 @@ public class IntentShim extends CordovaPlugin {
             }
         }
 
-        return true;
+        return false;  // No action matched
     }
 
     private void unregisterAllBroadcastReceivers() {
         Log.d(LOG_TAG, "Unregistering all broadcast receivers, size was " + receiverCallbacks.size());
-        for (BroadcastReceiver broadcastReceiver: receiverCallbacks.keySet()){
-            this.cordova.getActivity().unregisterReceiver(broadcastReceiver);
+        for (BroadcastReceiver broadcastReceiver: receiverCallbacks.keySet()) {
+            try {
+                this.cordova.getActivity().unregisterReceiver(broadcastReceiver);
+            } catch (Exception e) {
+                Log.e(LOG_TAG, "Error unregistering broadcast receiver: " + e.getMessage());
+            }
         }
         receiverCallbacks.clear();
     }
 
+    /**
+     * Check and request necessary permissions based on Android version
+     */
+    private boolean checkAndRequestPermissions(final CallbackContext callbackContext) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) { // Android 13+
+            boolean hasReadMediaImagesPermission = ContextCompat.checkSelfPermission(this.cordova.getActivity(),
+                    Manifest.permission.READ_MEDIA_IMAGES) == PackageManager.PERMISSION_GRANTED;
+            boolean hasReadMediaVideoPermission = ContextCompat.checkSelfPermission(this.cordova.getActivity(),
+                    Manifest.permission.READ_MEDIA_VIDEO) == PackageManager.PERMISSION_GRANTED;
+            
+            List<String> permissionsToRequest = new ArrayList<>();
+            
+            if (!hasReadMediaImagesPermission) {
+                permissionsToRequest.add(Manifest.permission.READ_MEDIA_IMAGES);
+            }
+            
+            if (!hasReadMediaVideoPermission) {
+                permissionsToRequest.add(Manifest.permission.READ_MEDIA_VIDEO);
+            }
+            
+            if (!permissionsToRequest.isEmpty()) {
+                ActivityCompat.requestPermissions(this.cordova.getActivity(),
+                        permissionsToRequest.toArray(new String[0]), PERMISSION_REQUEST_READ_STORAGE);
+                callbackContext.error("Please grant necessary media permissions");
+                return false;
+            }
+            
+            return true;
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) { // Android 6-12
+            if (!hasReadStoragePermission()) {
+                requestReadStoragePermission(callbackContext);
+                return false;
+            }
+            return true;
+        } else {
+            // Pre-Android 6 doesn't need runtime permissions
+            return true;
+        }
+    }
+
+    /**
+     * Handler for the checkAndRequestPermissions action from JS
+     */
+    private boolean handleCheckAndRequestPermissions(CallbackContext callbackContext) {
+        if (checkAndRequestPermissions(callbackContext)) {
+            callbackContext.success();
+            return true;
+        }
+        return false; // We've already sent an error in checkAndRequestPermissions
+    }
+
     private Uri remapUriWithFileProvider(String uriAsString, final CallbackContext callbackContext)
     {
-        //  Create the URI via FileProvider  Special case for N and above when installing apks
-        int permissionCheck = ContextCompat.checkSelfPermission(this.cordova.getActivity(),
-                Manifest.permission.READ_EXTERNAL_STORAGE);
-        if (permissionCheck != PackageManager.PERMISSION_GRANTED)
-        {
-            //  Could do better here - if the app does not already have permission should
-            //  only continue when we get the success callback from this.
-            ActivityCompat.requestPermissions(this.cordova.getActivity(),
-                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
-            callbackContext.error("Please grant read external storage permission");
+        // Use new permission check that handles Android 13+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !checkAndRequestPermissions(callbackContext)) {
             return null;
         }
 
-        try
-        {
+        //  Create the URI via FileProvider  Special case for N and above when installing apks
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            // For Android 6.0+ we need to check permissions at runtime
+            if (!hasReadStoragePermission()) {
+                requestReadStoragePermission(callbackContext);
+                return null;
+            }
+        }
+
+        try {
             String externalStorageState = getExternalStorageState();
             if (externalStorageState.equals(Environment.MEDIA_MOUNTED) || externalStorageState.equals(Environment.MEDIA_MOUNTED_READ_ONLY)) {
-                String fileName = uriAsString.substring(uriAsString.indexOf('/') + 2, uriAsString.length());
+                String fileName = uriAsString.substring(uriAsString.indexOf('/') + 2);
                 File uriAsFile = new File(fileName);
-                boolean fileExists = uriAsFile.exists();
-                if (!fileExists)
-                {
-                    Log.e(LOG_TAG, "File at path " + uriAsFile.getPath() + " with name " + uriAsFile.getName() + "does not exist");
-                    callbackContext.error("File not found: " + uriAsFile.toString());
+                if (!uriAsFile.exists()) {
+                    Log.e(LOG_TAG, "File at path " + uriAsFile.getPath() + " with name " + uriAsFile.getName() + " does not exist");
+                    callbackContext.error("File not found: " + uriAsFile);
                     return null;
                 }
                 String PACKAGE_NAME = this.cordova.getActivity().getPackageName() + ".darryncampbell.cordova.plugin.intent.fileprovider";
-                Uri uri = FileProvider.getUriForFile(this.cordova.getActivity().getApplicationContext(), PACKAGE_NAME, uriAsFile);
-                return uri;
-            }
-            else
-            {
-                Log.e(LOG_TAG, "Storage directory is not mounted.  Please ensure the device is not connected via USB for file transfer");
+                return FileProvider.getUriForFile(this.cordova.getActivity().getApplicationContext(), PACKAGE_NAME, uriAsFile);
+            } else {
+                Log.e(LOG_TAG, "Storage directory is not mounted. Please ensure the device is not connected via USB for file transfer");
                 callbackContext.error("Storage directory is returning not mounted");
                 return null;
             }
-        } catch (StringIndexOutOfBoundsException e)
-        {
-            Log.e(LOG_TAG, "URL is not well formed");
-            callbackContext.error("URL is not well formed");
+        } catch (StringIndexOutOfBoundsException e) {
+            Log.e(LOG_TAG, "URL is not well formed", e);
+            callbackContext.error("URL is not well formed: " + e.getMessage());
+            return null;
+        } catch (IllegalArgumentException e) {
+            Log.e(LOG_TAG, "FileProvider issue", e);
+            callbackContext.error("FileProvider error: " + e.getMessage());
             return null;
         }
+    }
+
+    private boolean hasReadStoragePermission() {
+        return ContextCompat.checkSelfPermission(this.cordova.getActivity(),
+                Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void requestReadStoragePermission(CallbackContext callbackContext) {
+        ActivityCompat.requestPermissions(this.cordova.getActivity(),
+                new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSION_REQUEST_READ_STORAGE);
+        callbackContext.error("Please grant read external storage permission");
     }
 
     private String getRealPathFromURI_API19(JSONObject obj, CallbackContext callbackContext) throws JSONException
@@ -556,8 +650,13 @@ public class IntentShim extends CordovaPlugin {
             Object value = extrasMap.get(key);
             String valueStr = String.valueOf(value);
             // If type is text html, the extra text must sent as HTML
-            if (key.equals(Intent.EXTRA_TEXT) && type.equals("text/html")) {
-                i.putExtra(key, Html.fromHtml(valueStr));
+            if (key.equals(Intent.EXTRA_TEXT) && type != null && type.equals("text/html")) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    i.putExtra(key, Html.fromHtml(valueStr, Html.FROM_HTML_MODE_LEGACY));
+                } else {
+                    //noinspection deprecation
+                    i.putExtra(key, Html.fromHtml(valueStr));
+                }
             } else if (key.equals(Intent.EXTRA_STREAM)) {
                 // allows sharing of images as attachments.
                 // value in this case should be a URI of a file
@@ -644,7 +743,6 @@ public class IntentShim extends CordovaPlugin {
         return new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                String action = intent.getAction();
                 CallbackContext onBroadcastCallbackContext = receiverCallbacks.get(this);
                 if (onBroadcastCallbackContext != null)
                 {
@@ -744,11 +842,15 @@ public class IntentShim extends CordovaPlugin {
     }
 
     private static JSONObject toJsonObject(Bundle bundle) {
-        //  Credit: https://github.com/napolitano/cordova-plugin-intent
+        if (bundle == null) {
+            return new JSONObject();
+        }
+        
         try {
             return (JSONObject) toJsonValue(bundle);
         } catch (JSONException e) {
-            throw new IllegalArgumentException("Cannot convert bundle to JSON: " + e.getMessage(), e);
+            Log.e(LOG_TAG, "Cannot convert bundle to JSON: " + e.getMessage(), e);
+            return new JSONObject();
         }
     }
 

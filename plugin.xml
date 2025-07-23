@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<plugin id="com-darryncampbell-cordova-plugin-intent" version="2.2.0" xmlns="http://apache.org/cordova/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android">
+<plugin id="com-darryncampbell-cordova-plugin-intent" version="3.1.1" xmlns="http://apache.org/cordova/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android">
     <name>Intent Shim</name>
     <js-module name="IntentShim" src="www/IntentShim.js">
         <clobbers target="intentShim" />
@@ -22,7 +22,7 @@
             </intent-filter>
         </config-file>
         <config-file target="AndroidManifest.xml" platform="android" parent="/manifest" mode="merge">
-            <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+            <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
         </config-file>
         <config-file target="AndroidManifest.xml" platform="android" parent="/manifest/application" mode="merge">
             <provider
@@ -35,10 +35,50 @@
                     android:resource="@xml/provider_paths"/>
             </provider>
         </config-file>
+
+        <!-- Add explicit FileProvider configuration for Android 7+ (API 24+) -->
+        <config-file target="AndroidManifest.xml" parent="application">
+            <provider
+                android:name="androidx.core.content.FileProvider"
+                android:authorities="${applicationId}.darryncampbell.cordova.plugin.intent.fileprovider"
+                android:exported="false"
+                android:grantUriPermissions="true">
+                <meta-data
+                    android:name="android.support.FILE_PROVIDER_PATHS"
+                    android:resource="@xml/provider_paths" />
+            </provider>
+        </config-file>
+
+        <!-- Ensure FileProvider is properly configured -->
+        <config-file target="AndroidManifest.xml" parent="application">
+            <!-- FileProvider might already be defined, just ensure it has these attributes -->
+            <provider
+                android:name="androidx.core.content.FileProvider"
+                android:authorities="${applicationId}.darryncampbell.cordova.plugin.intent.fileprovider"
+                android:exported="false"
+                android:grantUriPermissions="true">
+                <meta-data
+                    android:name="android.support.FILE_PROVIDER_PATHS"
+                    android:resource="@xml/provider_paths" />
+            </provider>
+        </config-file>
+
+        <!-- Add necessary permissions with maxSdkVersion where appropriate -->
+        <config-file target="AndroidManifest.xml" parent="/*">
+            <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+            <!-- For Android 13+ (API 33+), add more specific media permissions -->
+            <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+            <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+            <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+        </config-file>
+
         <source-file src="src/android/IntentShim.java" target-dir="src/com/darryncampbell/plugin/intent" />
         <source-file src="src/android/CordovaPluginIntentFileProvider.java" target-dir="src/com/darryncampbell/plugin/intent" />
 		<resource-file src="src/android/res/xml/provider_paths.xml" target="res/xml/provider_paths.xml"/>
 		<framework src="androidx.core:core:1.1.0" />
+    </platform>
+	
+</plugin>
     </platform>
 	
 </plugin>
