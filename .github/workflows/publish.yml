@@ -74,30 +74,30 @@ jobs:
             dist/cordova/*.tgz
         
       - name: Publish Capacitor Plugin to NPM
-        if: github.event.inputs.dry-run != 'true' && github.event.inputs.publish-capacitor != 'false'
+        if: github.event.inputs.dry-run != true && github.event.inputs.publish-capacitor != false
         run: cd dist/capacitor && npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       
       - name: Publish Cordova Plugin to NPM
-        if: github.event.inputs.dry-run != 'true' && github.event.inputs.publish-cordova != 'false'
+        if: github.event.inputs.dry-run != true && github.event.inputs.publish-cordova != false
         run: cd dist/cordova && npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           
       # Provide feedback at the end
       - name: Publication Status
-        run: |
-          echo "Build and package creation completed"
-          
-          if [[ "${{ github.event.inputs.dry-run }}" == "true" ]]; then
-            echo "✅ Dry run completed - packages were created but not published"
-            echo "Download the artifacts to inspect the packages"
-          else
-            if [[ "${{ github.event.inputs.publish-capacitor }}" != "false" ]]; then
-              echo "✅ Capacitor plugin published to npm registry"
-            fi
-            if [[ "${{ github.event.inputs.publish-cordova }}" != "false" ]]; then
-              echo "✅ Cordova plugin published to npm registry"
-            fi
+        run: echo "Build and package creation completed"
+      
+      - name: Dry Run Status
+        if: github.event.inputs.dry-run == 'true'
+        run: echo "✅ Dry run completed - packages were created but not published"
+      
+      - name: Capacitor Publish Status
+        if: github.event.inputs.dry-run != 'true' && github.event.inputs.publish-capacitor == 'true'
+        run: echo "✅ Capacitor plugin published to npm registry"
+      
+      - name: Cordova Publish Status
+        if: github.event.inputs.dry-run != 'true' && github.event.inputs.publish-cordova == 'true'
+        run: echo "✅ Cordova plugin published to npm registry"
           fi
