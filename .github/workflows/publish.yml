@@ -18,7 +18,6 @@ jobs:
   build-and-publish:
     runs-on: ubuntu-latest
     
-    # Add permission for creating releases if needed
     permissions:
       contents: write
       packages: write
@@ -26,7 +25,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          # Full git history for proper versioning
           fetch-depth: 0
       
       - name: Set up Node.js
@@ -53,13 +51,11 @@ jobs:
       - name: Prepare Cordova Plugin
         run: node scripts/prepare-cordova.js
       
-      # Add step to create package tarballs for verification
       - name: Create package tarballs
         run: |
           cd dist/capacitor && npm pack
           cd ../cordova && npm pack
           
-      # Upload tarballs as artifacts for verification
       - name: Upload package tarballs
         uses: actions/upload-artifact@v3
         with:
@@ -80,10 +76,14 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           
-      # Provide feedback at the end
       - name: Publication Status
         run: |
           if [[ "${{ github.event.inputs.dry-run }}" == "true" ]]; then
+            echo "✅ Dry run completed - packages were created but not published"
+            echo "Download the artifacts to inspect the packages"
+          else
+            echo "✅ Packages successfully published to npm registry"
+          fi
             echo "✅ Dry run completed - packages were created but not published"
             echo "Download the artifacts to inspect the packages"
           else
