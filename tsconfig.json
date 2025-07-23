@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "target": "ES2017",
+    "outDir": "dist/esm",
+    "declaration": true,
+    "allowSyntheticDefaultImports": true,
+    "experimentalDecorators": true,
+    "sourceMap": true,
+    "inlineSources": true
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules"]
+}

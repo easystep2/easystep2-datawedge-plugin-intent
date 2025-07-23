@@ -1,0 +1,81 @@
+<?xml version='1.0' encoding='utf-8'?>
+<plugin id="com-easystep2-datawedge-plugin-intent" version="3.2.1" xmlns="http://apache.org/cordova/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android">
+    <name>Intent Shim</name>
+    <js-module name="IntentShim" src="www/IntentShim.js">
+        <clobbers target="intentShim" />
+    </js-module>
+    
+    <hook type="after_prepare" src="hooks/after_prepare.js" />
+	
+	<!-- android -->
+    <platform name="android">
+        <config-file target="res/xml/config.xml" parent="/*">
+            <feature name="IntentShim" >
+                <param name="android-package" value="com.easystep2.datawedge.plugin.intent.IntentShim"/>
+                <param name="onload" value="true"/>
+            </feature>
+        </config-file>
+        <config-file target="AndroidManifest.xml" platform="android" parent="/manifest/application/activity" mode="merge">
+            <intent-filter>
+                <action android:name="com.easystep2.datawedge.plugin.intent.ACTION" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </config-file>
+        <config-file target="AndroidManifest.xml" platform="android" parent="/manifest" mode="merge">
+            <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+        </config-file>
+        <config-file target="AndroidManifest.xml" platform="android" parent="/manifest/application" mode="merge">
+            <provider
+                android:name="com.easystep2.datawedge.plugin.intent.CordovaPluginIntentFileProvider"
+                android:authorities="${applicationId}.easystep2.datawedge.plugin.intent.fileprovider"
+                android:exported="false"
+                android:grantUriPermissions="true">
+                <meta-data
+                    android:name="android.support.FILE_PROVIDER_PATHS"
+                    android:resource="@xml/provider_paths"/>
+            </provider>
+        </config-file>
+
+        <!-- Add explicit FileProvider configuration for Android 7+ (API 24+) -->
+        <config-file target="AndroidManifest.xml" parent="application">
+            <provider
+                android:name="androidx.core.content.FileProvider"
+                android:authorities="${applicationId}.easystep2.datawedge.plugin.intent.fileprovider"
+                android:exported="false"
+                android:grantUriPermissions="true">
+                <meta-data
+                    android:name="android.support.FILE_PROVIDER_PATHS"
+                    android:resource="@xml/provider_paths" />
+            </provider>
+        </config-file>
+
+        <!-- Ensure FileProvider is properly configured -->
+        <config-file target="AndroidManifest.xml" parent="application">
+            <!-- FileProvider might already be defined, just ensure it has these attributes -->
+            <provider
+                android:name="androidx.core.content.FileProvider"
+                android:authorities="${applicationId}.easystep2.datawedge.plugin.intent.fileprovider"
+                android:exported="false"
+                android:grantUriPermissions="true">
+                <meta-data
+                    android:name="android.support.FILE_PROVIDER_PATHS"
+                    android:resource="@xml/provider_paths" />
+            </provider>
+        </config-file>
+
+        <!-- Add necessary permissions with maxSdkVersion where appropriate -->
+        <config-file target="AndroidManifest.xml" parent="/*">
+            <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+            <!-- For Android 13+ (API 33+), add more specific media permissions -->
+            <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+            <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+            <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+        </config-file>
+
+        <source-file src="src/android/IntentShim.java" target-dir="src/com/easystep2/plugin/intent" />
+        <source-file src="src/android/CordovaPluginIntentFileProvider.java" target-dir="src/com/easystep2/plugin/intent" />
+		<resource-file src="src/android/res/xml/provider_paths.xml" target="res/xml/provider_paths.xml"/>
+		<framework src="androidx.core:core:1.1.0" />
+    </platform>
+	
+</plugin>

@@ -1,42 +1,21 @@
 {
-  "name": "com-easystep2-datawedge-plugin-intent",
-  "version": "3.2.1",
-  "description": "General purpose intent shim layer for cordova appliations on Android. Handles various techniques for sending and receiving intents. Android 14+ compatible.",
-  "main": "intentShim.js",
-  "cordova": {
-    "id": "com-easystep2-datawedge-plugin-intent",
-    "platforms": [
-      "android"
-    ]
+  "name": "com-easystep2-datawedge-plugin-intent-dev",
+  "version": "4.0.0",
+  "description": "Capacitor and Cordova plugins for Android Intents",
+  "scripts": {
+    "build:capacitor": "npm run clean && tsc && rollup -c rollup.config.js && cp capacitor/package.json dist/capacitor/package.json && cp -r src/android dist/capacitor/android",
+    "build:cordova": "npm run clean && tsc && cp cordova/plugin.xml dist/cordova/plugin.xml && cp -r www dist/cordova/www && cp -r src/android dist/cordova/src",
+    "publish:capacitor": "cd dist/capacitor && npm publish",
+    "publish:cordova": "cd dist/cordova && npm publish",
+    "clean": "rimraf dist",
+    "watch": "tsc --watch"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/easystep2/easystep2-datawedge-plugin-intent.git"
-  },
-  "keywords": [
-    "ecosystem:cordova",
-    "cordova-android",
-    "Intent",
-    "android14"
-  ],
   "author": "H.W. Blom",
   "license": "MIT",
-  "engines": {
-    "node": ">=10.0.0",
-    "npm": ">=6.0.0"
-  },
-  "cordovaDependencies": {
-    "3.0.0": {
-      "cordova-android": ">=9.0.0"
-    },
-    "4.0.0": {
-      "cordova-android": ">=10.0.0"
-    },
-    "5.0.0": {
-      "cordova-android": ">=12.0.0"
-    }
-  },
-  "peerDependencies": {
-    "cordova-android": ">=9.0.0"
+  "devDependencies": {
+    "rimraf": "^3.0.2",
+    "rollup": "^2.77.2",
+    "typescript": "^4.7.4",
+    "@capacitor/core": "^4.0.0"
   }
 }
