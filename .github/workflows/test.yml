@@ -1,0 +1,11 @@
+# filepath: c:\Users\RickBlom\Documents\AL\easy-barcode-scanning\easystep2-datawedge-plugin-intent\.github\workflows\test.yml
+name: Simple Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Hello World"
