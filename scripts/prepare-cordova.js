@@ -39,18 +39,67 @@ const filesToCopy = [
     'LICENSE',
     'plugin.xml',           // Essential for Cordova plugins
     'www/datawedge.js',     // Main plugin JS interface
-    'src',                  // Native platform code
-    'res',                  // Resources directory if present
     '.npmignore'            // If you have specific npm ignore rules
     // Add other files needed for Cordova
 ];
 
+// Copy files - not directories
 filesToCopy.forEach(file => {
     if (fs.existsSync(path.join(__dirname, '..', file))) {
-        fs.copyFileSync(
-            path.join(__dirname, '..', file),
-            path.join(cordovaDir, file)
-        );
+        const sourcePath = path.join(__dirname, '..', file);
+        const destPath = path.join(cordovaDir, file);
+
+        // Create parent directory if it doesn't exist
+        const destDir = path.dirname(destPath);
+        if (!fs.existsSync(destDir)) {
+            fs.mkdirSync(destDir, { recursive: true });
+        }
+
+        // Only use copyFileSync for files, not directories
+        if (fs.statSync(sourcePath).isFile()) {
+            fs.copyFileSync(sourcePath, destPath);
+        }
+    }
+});
+
+// Handle directories separately
+const directoriesToCopy = [
+    'src',                  // Native platform code
+    'res'                   // Resources directory if present
+];
+
+// Recursive function to copy directories
+function copyDir(src, dest) {
+    // Create destination directory
+    if (!fs.existsSync(dest)) {
+        fs.mkdirSync(dest, { recursive: true });
+    }
+
+    // Read source directory
+    const entries = fs.readdirSync(src, { withFileTypes: true });
+
+    // Copy each entry
+    for (const entry of entries) {
+        const srcPath = path.join(src, entry.name);
+        const destPath = path.join(dest, entry.name);
+
+        if (entry.isDirectory()) {
+            // Recursive copy for directories
+            copyDir(srcPath, destPath);
+        } else {
+            // Copy file
+            fs.copyFileSync(srcPath, destPath);
+        }
+    }
+}
+
+// Copy directories
+directoriesToCopy.forEach(dir => {
+    const sourcePath = path.join(__dirname, '..', dir);
+    const destPath = path.join(cordovaDir, dir);
+
+    if (fs.existsSync(sourcePath) && fs.statSync(sourcePath).isDirectory()) {
+        copyDir(sourcePath, destPath);
     }
 });
 
