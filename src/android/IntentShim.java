@@ -1,4 +1,4 @@
-package com.darryncampbell.cordova.plugin.intent;
+package com.easystep2-datawedge.plugin.intent;
 
 import android.Manifest;
 import android.app.Activity;
@@ -433,7 +433,7 @@ public class IntentShim extends CordovaPlugin {
                     callbackContext.error("File not found: " + uriAsFile);
                     return null;
                 }
-                String PACKAGE_NAME = this.cordova.getActivity().getPackageName() + ".darryncampbell.cordova.plugin.intent.fileprovider";
+                String PACKAGE_NAME = this.cordova.getActivity().getPackageName() + ".easystep2.datawedge.plugin.intent.fileprovider";
                 return FileProvider.getUriForFile(this.cordova.getActivity().getApplicationContext(), PACKAGE_NAME, uriAsFile);
             } else {
                 Log.e(LOG_TAG, "Storage directory is not mounted. Please ensure the device is not connected via USB for file transfer");

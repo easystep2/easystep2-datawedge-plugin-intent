@@ -1,16 +1,31 @@
 *Please be aware that this application / sample is provided as-is for demonstration purposes without any guarantee of support*
 =========================================================
 
-[![npm version](http://img.shields.io/npm/v/com-darryncampbell-cordova-plugin-intent.svg?style=flat-square)](https://npmjs.org/package/com-darryncampbell-cordova-plugin-intent "View this project on npm")
-[![npm downloads](http://img.shields.io/npm/dm/com-darryncampbell-cordova-plugin-intent.svg?style=flat-square)](https://npmjs.org/package/com-darryncampbell-cordova-plugin-intent "View this project on npm")
-[![npm downloads](http://img.shields.io/npm/dt/com-darryncampbell-cordova-plugin-intent.svg?style=flat-square)](https://npmjs.org/package/com-darryncampbell-cordova-plugin-intent "View this project on npm")
-[![npm licence](http://img.shields.io/npm/l/com-darryncampbell-cordova-plugin-intent.svg?style=flat-square)](https://npmjs.org/package/com-darryncampbell-cordova-plugin-intent "View this project on npm")
+# EasyStep2 DataWedge Plugin Intent
 
-Note: this is the current underlying implementation for https://www.npmjs.com/package/@ionic-native/web-intent and https://ionicframework.com/docs/native/web-intent/
+This is an updated and maintained version of the original [darryncampbell-cordova-plugin-intent](https://github.com/darryncampbell/darryncampbell-cordova-plugin-intent) plugin, now named `com.easystep2.datawedge.plugin.intent`.
+
+[![npm version](http://img.shields.io/npm/v/com.easystep2.datawedge.plugin.intent.svg?style=flat-square)](https://npmjs.org/package/com.easystep2.datawedge.plugin.intent "View this project on npm")
+
+## Enhancements by EasyStep2
+- Fixed compatibility issues with Angular 14+
+- Maintained in two branches:
+  - **cordova**: For traditional Cordova applications
+  - **capacitor**: For Ionic Capacitor applications
+- Regularly updated and maintained
+
+The original plugin badges are preserved for reference:
+
+[![Original npm version](http://img.shields.io/npm/v/com-darryncampbell-cordova-plugin-intent.svg?style=flat-square&label=original)](https://npmjs.org/package/com-darryncampbell-cordova-plugin-intent "View original project on npm")
+[![Original npm downloads](http://img.shields.io/npm/dm/com-darryncampbell-cordova-plugin-intent.svg?style=flat-square&label=original%20downloads)](https://npmjs.org/package/com-darryncampbell-cordova-plugin-intent "View original project on npm")
+[![Original npm total downloads](http://img.shields.io/npm/dt/com-darryncampbell-cordova-plugin-intent.svg?style=flat-square&label=original%20total)](https://npmjs.org/package/com-darryncampbell-cordova-plugin-intent "View original project on npm")
+[![Original npm licence](http://img.shields.io/npm/l/com-darryncampbell-cordova-plugin-intent.svg?style=flat-square&label=license)](https://npmjs.org/package/com-darryncampbell-cordova-plugin-intent "View original project on npm")
+
+Note: the original plugin was the underlying implementation for https://www.npmjs.com/package/@ionic-native/web-intent and https://ionicframework.com/docs/native/web-intent/
 
 # Android X support
-- For Android X Support please use version >= [2.x.x](https://www.npmjs.com/package/com-darryncampbell-cordova-plugin-intent/v/2.0.0) 
-- For Android Support Library please use version [1.3.x](https://www.npmjs.com/package/com-darryncampbell-cordova-plugin-intent/v/1.3.0)
+- For Android X Support please use version >= [2.x.x](https://www.npmjs.com/package/com.easystep2.datawedge.plugin.intent) 
+- For Android Support Library please refer to the original plugin version [1.3.x](https://www.npmjs.com/package/com-darryncampbell-cordova-plugin-intent/v/1.3.0)
 
 # Interaction with Camera Plugin
 If you are installing this plugin along with cordova-plugin-camera you **MUST install cordova-plugin-camera first.**
@@ -19,10 +34,12 @@ If you are installing this plugin along with cordova-plugin-camera you **MUST in
 This Cordova plugin provides a general purpose shim layer for the Android intent mechanism, exposing various ways to handle sending and receiving intents.
 
 ## Credits
-This project uses code released under the following MIT projects:
+This project is based on code released under the following MIT projects:
+- https://github.com/darryncampbell/darryncampbell-cordova-plugin-intent
 - https://github.com/napolitano/cordova-plugin-intent (marked as no longer maintained)
 - https://github.com/Initsogar/cordova-webintent.git (no longer available on github but the project is forked here: https://github.com/darryncampbell/cordova-webintent)
-This project is also released under MIT.  Credit is given in the code where appropriate
+
+This project is also released under MIT. Credit is given in the code where appropriate.
 
 ## IntentShim
 This plugin defines a `window.plugins.intentShim` object which provides an API for interacting with the Android intent mechanism on any Android device.
@@ -32,15 +49,16 @@ An example application is available at https://github.com/darryncampbell/plugin-
 
 ## Installation
 
-### Cordova Version < 7
-    cordova plugin add https://github.com/darryncampbell/darryncampbell-cordova-plugin-intent.git
+### Cordova
+```bash
+cordova plugin add com.easystep2.datawedge.plugin.intent
+```
 
-### Cordova Version >= 7
-    cordova plugin add com-darryncampbell-cordova-plugin-intent
-
-## Use with PhoneGap
-
-Please use the latest PhoneGap cli when including this plugin, please refer to [Issue 63](https://github.com/darryncampbell/darryncampbell-cordova-plugin-intent/issues/63) for context. 
+### Ionic Capacitor
+```bash
+npm install com.easystep2.datawedge.plugin.intent
+npx cap sync
+```
 
 ## Supported Platforms
 - Android
@@ -61,8 +79,8 @@ Register a broadcast receiver for two filters:
 
     window.plugins.intentShim.registerBroadcastReceiver({
         filterActions: [
-            'com.darryncampbell.cordova.plugin.broadcastIntent.ACTION',
-            'com.darryncampbell.cordova.plugin.broadcastIntent.ACTION_2'
+            'com.easystep2.datawedge.plugin.broadcastIntent.ACTION',
+            'com.easystep2.datawedge.plugin.broadcastIntent.ACTION_2'
             ]
         },
         function(intent) {
@@ -113,7 +131,7 @@ Send a broadcast intent to a specified action that contains a random number in t
 
     window.plugins.intentShim.startActivity(
         {
-            action: "com.darryncampbell.cordova.plugin.intent.ACTION",
+            action: "com.easystep2.datawedge.plugin.intent.ACTION",
             extras: {
                     'random.number': Math.floor((Math.random() * 1000) + 1)
             }
