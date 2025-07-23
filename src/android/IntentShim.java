@@ -1,4 +1,4 @@
-package com.easystep2-datawedge.plugin.intent;
+package com.easystep2.datawedge.plugin.intent;
 
 import android.Manifest;
 import android.app.Activity;

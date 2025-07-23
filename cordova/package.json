@@ -1,10 +1,10 @@
 {
   "name": "com-easystep2-datawedge-plugin-intent-cordova",
-  "version": "3.2.1",
+  "version": "4.1.1",
   "description": "Cordova plugin for Android Intents",
   "main": "www/IntentShim.js",
   "types": "www/IntentShim.d.ts",
-  "author": "H.W. Blom",
+  "author": "Easystep2",
   "license": "MIT",
   "cordova": {
     "id": "com-easystep2-datawedge-plugin-intent",

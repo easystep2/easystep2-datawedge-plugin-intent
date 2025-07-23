@@ -1,6 +1,6 @@
 {
   "name": "com-easystep2-datawedge-plugin-intent",
-  "version": "3.2.1",
+  "version": "4.1.1",
   "description": "General purpose intent shim layer for cordova appliations on Android. Handles various techniques for sending and receiving intents. Android 14+ compatible.",
   "main": "intentShim.js",
   "cordova": {
@@ -19,7 +19,7 @@
     "Intent",
     "android14"
   ],
-  "author": "H.W. Blom",
+  "author": "Easystep2",
   "license": "MIT",
   "engines": {
     "node": ">=10.0.0",
