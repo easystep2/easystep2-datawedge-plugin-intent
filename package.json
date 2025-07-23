@@ -3,14 +3,34 @@
   "version": "4.0.0",
   "description": "Capacitor and Cordova plugins for Android Intents",
   "scripts": {
-    "build:capacitor": "npm run clean && tsc && rollup -c rollup.config.js && cp capacitor/package.json dist/capacitor/package.json && cp -r src/android dist/capacitor/android",
-    "build:cordova": "npm run clean && tsc && cp cordova/plugin.xml dist/cordova/plugin.xml && cp -r www dist/cordova/www && cp -r src/android dist/cordova/src",
-    "publish:capacitor": "cd dist/capacitor && npm publish",
-    "publish:cordova": "cd dist/cordova && npm publish",
     "clean": "rimraf dist",
-    "watch": "tsc --watch"
+    "build:ts": "tsc && rollup -c rollup.config.js",
+    "prepare:capacitor": "node scripts/prepare-capacitor.js",
+    "prepare:cordova": "node scripts/prepare-cordova.js",
+    "build:capacitor": "npm run clean && npm run build:ts && npm run prepare:capacitor",
+    "build:cordova": "npm run clean && npm run build:ts && npm run prepare:cordova",
+    "build": "npm run clean && npm run build:ts && npm run prepare:capacitor && npm run prepare:cordova",
+    "test": "echo \"No tests specified\" && exit 0",
+    "watch": "tsc --watch",
+    "test:build:cordova": "npm run build:cordova && cd dist/cordova && npm pack",
+    "test:build": "npm run build && cd dist/cordova && npm pack && cd ../capacitor && npm pack"
   },
-  "author": "H.W. Blom",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/easystep2/easystep2-datawedge-plugin-intent.git"
+  },
+  "keywords": [
+    "capacitor",
+    "cordova",
+    "plugin",
+    "android",
+    "intent",
+    "datawedge",
+    "zebra",
+    "scanner",
+    "barcode"
+  ],
+  "author": "Easystep2",
   "license": "MIT",
   "devDependencies": {
     "rimraf": "^3.0.2",

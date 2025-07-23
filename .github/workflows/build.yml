@@ -1,0 +1,58 @@
+name: Build Plugin
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build TypeScript
+        run: npm run build:ts
+        
+      - name: Prepare Capacitor Plugin
+        run: node scripts/prepare-capacitor.js
+        
+      - name: Prepare Cordova Plugin
+        run: node scripts/prepare-cordova.js
+        
+      - name: Create package tarballs
+        run: |
+          cd dist/capacitor && npm pack
+          cd ../cordova && npm pack
+          
+      - name: Upload Capacitor artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: capacitor-plugin
+          path: dist/capacitor
+          
+      - name: Upload Cordova artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: cordova-plugin
+          path: dist/cordova
+          
+      - name: Upload Package tarballs
+        uses: actions/upload-artifact@v3
+        with:
+          name: npm-packages
+          path: |
+            dist/capacitor/*.tgz
+            dist/cordova/*.tgz

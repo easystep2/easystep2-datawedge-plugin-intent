@@ -1,0 +1,28 @@
+{
+  "name": "com-easystep2-datawedge-plugin-intent-cordova",
+  "version": "3.2.1",
+  "description": "Cordova plugin for Android Intents",
+  "main": "www/IntentShim.js",
+  "types": "www/IntentShim.d.ts",
+  "author": "H.W. Blom",
+  "license": "MIT",
+  "cordova": {
+    "id": "com-easystep2-datawedge-plugin-intent",
+    "platforms": [
+      "android"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/easystep2/easystep2-datawedge-plugin-intent.git"
+  },
+  "bugs": {
+    "url": "https://github.com/easystep2/easystep2-datawedge-plugin-intent/issues"
+  },
+  "keywords": [
+    "cordova",
+    "plugin",
+    "intent",
+    "android"
+  ]
+}
