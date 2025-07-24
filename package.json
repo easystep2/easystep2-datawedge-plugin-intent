@@ -1,10 +1,10 @@
 {
-  "name": "com-easystep2-datawedge-plugin-intent-dev",
+  "name": "com-easystep2-datawedge-plugin-intent",
   "version": "4.3.1",
   "description": "Capacitor and Cordova plugins for Android Intents",
   "scripts": {
     "clean": "rimraf dist",
-    "build:ts": "tsc && rollup -c rollup.config.js",
+    "build:ts": "tsc && rollup -c src/capacitor/rollup.config.js",
     "prepare:capacitor": "node scripts/prepare-capacitor.js",
     "prepare:cordova": "node scripts/prepare-cordova.js",
     "build:capacitor": "npm run clean && npm run build:ts && npm run prepare:capacitor",
@@ -50,7 +50,9 @@
     "rimraf": "^3.0.2",
     "rollup": "^2.77.2",
     "typescript": "^5.8.3",
-    "@capacitor/core": "^7.4.2"
+    "@capacitor/core": "^7.4.2",
+    "@rollup/plugin-node-resolve": "^13.3.0",
+    "@rollup/plugin-commonjs": "^22.0.2"
   },
   "peerDependencies": {
     "@capacitor/core": ">=4.0.0"

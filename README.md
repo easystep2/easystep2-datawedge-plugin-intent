@@ -3,9 +3,9 @@
 
 # EasyStep2 DataWedge Plugin Intent
 
-This is an updated and maintained version of the original [darryncampbell-cordova-plugin-intent](https://github.com/darryncampbell/darryncampbell-cordova-plugin-intent) plugin, now named `com.easystep2.datawedge.plugin.intent`.
+This is an updated and maintained version of the original [darryncampbell-cordova-plugin-intent](https://github.com/darryncampbell/darryncampbell-cordova-plugin-intent) plugin, now named `com.easystep2.datawedge.plugin.intent-cordova`.
 
-[![npm version](http://img.shields.io/npm/v/com.easystep2.datawedge.plugin.intent.svg?style=flat-square)](https://npmjs.org/package/com.easystep2.datawedge.plugin.intent "View this project on npm")
+[![npm version](http://img.shields.io/npm/v/com.easystep2.datawedge.plugin.intent.svg?style=flat-square)](https://www.npmjs.com/package/com-easystep2-datawedge-plugin-intent-cordova "View this project on npm")
 
 ## Enhancements by EasyStep2
 - Fixed compatibility issues with Angular 14+
@@ -423,6 +423,3 @@ The following constants are defined in the plugin for use in JavaScript
 ## Tested Versions
 
 Tested with Cordova version 6.5.0 and Cordova Android version 6.2.1
-
-
-

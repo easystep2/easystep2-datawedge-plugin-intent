@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.easystep2.datawedge">
+    package="com.easystep2.datawedge.plugin.intent">
+    
+    <!-- No special permissions needed for basic intent operations -->
+    
 </manifest>
