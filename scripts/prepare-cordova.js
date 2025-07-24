@@ -6,7 +6,7 @@ const rimraf = require('rimraf');
 const rootDir = path.join(__dirname, '..');
 const distDir = path.join(rootDir, 'dist');
 const cordovaDistDir = path.join(distDir, 'cordova');
-const cordovaSrcDir = path.join(rootDir, 'cordova');
+const cordovaSrcDir = path.join(rootDir, 'src', 'cordova');
 
 // Create directories if they don't exist
 if (!fs.existsSync(distDir)) {
@@ -31,48 +31,19 @@ if (fs.existsSync(path.join(cordovaSrcDir, 'package.json'))) {
         path.join(cordovaDistDir, 'package.json'),
         JSON.stringify(cordovaPackageJson, null, 2)
     );
-} else if (fs.existsSync(path.join(rootDir, 'plugin.xml'))) {
-    // Create a basic package.json from plugin.xml info
-    const rootPackageJson = require(path.join(rootDir, 'package.json'));
-    const cordovaPackageJson = {
-        name: "com-easystep2-datawedge-plugin-intent",
-        version: rootPackageJson.version,
-        description: rootPackageJson.description,
-        cordova: {
-            id: "com-easystep2-datawedge-plugin-intent",
-            platforms: ["android"]
-        },
-        keywords: [
-            ...rootPackageJson.keywords,
-            "ecosystem:cordova",
-            "cordova-android"
-        ],
-        author: rootPackageJson.author,
-        license: rootPackageJson.license
-    };
-
-    fs.writeFileSync(
-        path.join(cordovaDistDir, 'package.json'),
-        JSON.stringify(cordovaPackageJson, null, 2)
-    );
 } else {
-    console.error('Error: Neither cordova/package.json nor plugin.xml found');
+    console.error('Error: cordova/package.json not found');
     process.exit(1);
 }
 
 // Copy plugin.xml
-if (fs.existsSync(path.join(rootDir, 'plugin.xml'))) {
-    fs.copyFileSync(
-        path.join(rootDir, 'plugin.xml'),
-        path.join(cordovaDistDir, 'plugin.xml')
-    );
-} else if (fs.existsSync(path.join(cordovaSrcDir, 'plugin.xml'))) {
+if (fs.existsSync(path.join(cordovaSrcDir, 'plugin.xml'))) {
     fs.copyFileSync(
         path.join(cordovaSrcDir, 'plugin.xml'),
         path.join(cordovaDistDir, 'plugin.xml')
     );
 } else {
-    console.error('Error: plugin.xml not found');
+    console.error('Error: plugin.xml not found in src/cordova directory');
     process.exit(1);
 }
 
@@ -91,9 +62,7 @@ try {
 }
 
 // Copy www directory
-const wwwSrcDir = fs.existsSync(path.join(cordovaSrcDir, 'www')) ?
-    path.join(cordovaSrcDir, 'www') :
-    path.join(rootDir, 'www');
+const wwwSrcDir = path.join(cordovaSrcDir, 'www');
 
 if (fs.existsSync(wwwSrcDir)) {
     copyDirSync(wwwSrcDir, path.join(cordovaDistDir, 'www'));

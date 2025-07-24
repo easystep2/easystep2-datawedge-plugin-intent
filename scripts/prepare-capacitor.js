@@ -6,7 +6,7 @@ const rimraf = require('rimraf');
 const rootDir = path.join(__dirname, '..');
 const distDir = path.join(rootDir, 'dist');
 const capacitorDistDir = path.join(distDir, 'capacitor');
-const capacitorSrcDir = path.join(rootDir, 'capacitor');
+const capacitorSrcDir = path.join(rootDir, 'src', 'capacitor');
 
 // Create directories if they don't exist
 if (!fs.existsSync(distDir)) {
@@ -51,19 +51,18 @@ try {
 }
 
 // Copy dist files
-fs.mkdirSync(path.join(capacitorDistDir, 'dist'));
-fs.mkdirSync(path.join(capacitorDistDir, 'dist', 'esm'), { recursive: true });
+fs.mkdirSync(path.join(capacitorDistDir, 'esm'), { recursive: true });
 
 // Copy compiled JS files
-copyDirSync(path.join(distDir, 'esm'), path.join(capacitorDistDir, 'dist', 'esm'));
+copyDirSync(path.join(distDir, 'esm'), path.join(capacitorDistDir, 'esm'));
 fs.copyFileSync(
     path.join(distDir, 'plugin.js'),
-    path.join(capacitorDistDir, 'dist', 'plugin.js')
+    path.join(capacitorDistDir, 'plugin.js')
 );
 if (fs.existsSync(path.join(distDir, 'plugin.js.map'))) {
     fs.copyFileSync(
         path.join(distDir, 'plugin.js.map'),
-        path.join(capacitorDistDir, 'dist', 'plugin.js.map')
+        path.join(capacitorDistDir, 'plugin.js.map')
     );
 }
 
@@ -76,6 +75,18 @@ if (fs.existsSync(path.join(capacitorSrcDir, 'android'))) {
 } else {
     console.warn('Warning: android directory not found in capacitor directory');
 }
+
+// Update package.json capacitor android src
+const capacitorPackageJsonPath = path.join(capacitorDistDir, 'package.json');
+const capacitorPackageJson = require(capacitorPackageJsonPath);
+capacitorPackageJson.capacitor.android.src = 'android';
+capacitorPackageJson.main = 'plugin.js';
+capacitorPackageJson.module = 'esm/index.js';
+capacitorPackageJson.types = 'esm/index.d.ts';
+fs.writeFileSync(
+    capacitorPackageJsonPath,
+    JSON.stringify(capacitorPackageJson, null, 2)
+);
 
 // Copy hooks directory if it exists in capacitor directory
 if (fs.existsSync(path.join(capacitorSrcDir, 'hooks'))) {

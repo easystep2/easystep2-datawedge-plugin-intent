@@ -36,11 +36,8 @@
   "license": "MIT",
   "files": [
     "dist/",
-    "android/",
     "src/",
     "scripts/",
-    "capacitor/",
-    "plugin.xml",
     "README.md",
     "LICENSE"
   ],
