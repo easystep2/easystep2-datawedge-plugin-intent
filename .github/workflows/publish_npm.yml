@@ -25,7 +25,7 @@ on:
       publish-capacitor:
         description: 'Publish Capacitor plugin'
         type: boolean
-        default: false  # TEMPORARY: Changed default to false until Capacitor plugin is ready
+        default: true  
       publish-cordova:
         description: 'Publish Cordova plugin'
         type: boolean
@@ -61,12 +61,22 @@ jobs:
           git config --global user.name "GitHub Actions Bot"
           git config --global user.email "actions@github.com"
 
+      # Display files before potentially modifying them
+      - name: Display initial files 
+        run: |
+          echo "Initial file structure:"
+          find . -type f -name "*.tgz" | sort || echo "No tarballs found initially"
+          ls -la dist/ || echo "No dist directory exists yet"
+
       - name: Build artifacts if not triggered by workflow_run
         if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
         run: |
           npm install
           
-          # Handle version management
+          # Handle version management - apply to all selected plugins
+          PUBLISH_CAPACITOR="${{ github.event.inputs.publish-capacitor }}"
+          PUBLISH_CORDOVA="${{ github.event.inputs.publish-cordova }}"
+          
           if [ "${{ github.event.inputs.auto_bump }}" != "none" ]; then
             # Auto-bump the version
             echo "Auto-bumping version (${{ github.event.inputs.auto_bump }})..."
@@ -86,46 +96,152 @@ jobs:
             # Use the manually specified version
             echo "Using specified version: ${{ github.event.inputs.version }}"
             node scripts/sync-versions.js --version=${{ github.event.inputs.version }}
+            
+            NEW_VERSION="${{ github.event.inputs.version }}"
+            echo "Set version to: $NEW_VERSION"
+          else
+            # Use current version from package.json
+            NEW_VERSION=$(node -p "require('./package.json').version")
+            echo "Using current version: $NEW_VERSION"
           fi
           
+          echo "Final version for all selected plugins: $NEW_VERSION"
+          
+          # Debug inputs
+          echo "publish-capacitor: ${{ github.event.inputs.publish-capacitor }}"
+          echo "publish-cordova: ${{ github.event.inputs.publish-cordova }}"
+          
+          # Add even more debugging for the build step
+          echo "----- DEBUG INFORMATION -----"
+          echo "Workflow input values:"
+          echo "publish-capacitor: '${{ github.event.inputs.publish-capacitor }}'"
+          echo "publish-cordova: '${{ github.event.inputs.publish-cordova }}'"
+          echo "dry-run: '${{ github.event.inputs.dry-run }}'"
+          echo "--------------------------"
+          
+          # Build TypeScript for both plugins
           npm run build:ts
           
-          # TEMPORARY: Capacitor build is commented out until it's ready
-          # node scripts/prepare-capacitor.js
+          # Conditionally build Capacitor plugin with better debugging
+          echo "Checking if capacitor should be built ($PUBLISH_CAPACITOR == 'true')"
+          if [ "$PUBLISH_CAPACITOR" = "true" ]; then
+            echo "✓ Building Capacitor plugin..."
+            mkdir -p dist/capacitor
+            node scripts/prepare-capacitor.js
+            if [ $? -ne 0 ]; then
+              echo "❌ Error: prepare-capacitor.js script failed"
+              exit 1
+            fi
+            
+            echo "Verifying Capacitor plugin structure:"
+            ls -la dist/capacitor/ || echo "Error: capacitor directory structure is not as expected"
+            
+            cd dist/capacitor
+            echo "Creating Capacitor plugin tarball..."
+            npm pack
+            CAPACITOR_TARBALL=$(find . -name "*.tgz")
+            echo "Created Capacitor tarball: $CAPACITOR_TARBALL"
+            cd ../..
+            echo "✓ Capacitor plugin built successfully"
+            
+            # Copy capacitor artifact to known location for artifact upload
+            mkdir -p dist/npm-packages/
+            cp dist/capacitor/*.tgz dist/npm-packages/ || echo "Warning: Could not copy Capacitor tarball"
+          else
+            echo "⏩ Skipping Capacitor plugin build (value: '$PUBLISH_CAPACITOR')"
+          fi
           
-          # Only build the Cordova plugin
-          node scripts/prepare-cordova.js
-          
-          # TEMPORARY: Only package Cordova plugin
-          # cd dist/capacitor && npm pack
-          cd dist/cordova && npm pack
+          # Conditionally build Cordova plugin with better debugging
+          echo "Checking if cordova should be built ($PUBLISH_CORDOVA == 'true')"
+          if [ "$PUBLISH_CORDOVA" = "true" ]; then
+            echo "✓ Building Cordova plugin..."
+            node scripts/prepare-cordova.js
+            if [ $? -ne 0 ]; then
+              echo "❌ Error: prepare-cordova.js script failed"
+              exit 1
+            fi
+            cd dist/cordova || { echo "❌ Error: cordova directory not found"; exit 1; }
+            npm pack
+            cd ../..
+            echo "✓ Cordova plugin built successfully"
+          else
+            echo "⏩ Skipping Cordova plugin build (value: '$PUBLISH_CORDOVA')"
+          fi
 
+          # Copy cordova artifact to known location for artifact upload
+          if [ "$PUBLISH_CORDOVA" = "true" ]; then
+            mkdir -p dist/npm-packages/
+            cp dist/cordova/*.tgz dist/npm-packages/ || echo "Warning: Could not copy Cordova tarball"
+          fi
+          
+          # Ensure build artifacts are available for manual runs too
+          echo "All build artifacts:"
+          find dist -name "*.tgz" | sort || echo "No tarballs found after build"
+
+      # For workflow_run triggered builds, download the artifacts
       - name: Download artifacts from build job
         if: github.event_name == 'workflow_run'
         uses: actions/download-artifact@v4
         with:
           name: npm-packages
-          path: dist
+          path: dist/npm-packages
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id }}
       
+      # Display downloaded files - now checking npm-packages directory specifically
       - name: Display downloaded files
-        run: ls -R dist
+        run: |
+          echo "Files in dist directory:"
+          ls -R dist || echo "No dist directory found"
+          
+          echo "Npm packages found:"
+          find dist -name "*.tgz" | sort || echo "No tarballs found"
+
+      # Upload artifacts for current build as well
+      - name: Upload artifacts
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-packages
+          path: dist/npm-packages/*.tgz
+          if-no-files-found: warn
 
       - name: Publish Capacitor Plugin to NPM
-        if: ${{ false }}  # TEMPORARY: Disabled until Capacitor plugin is ready
+        if: github.event.inputs.publish-capacitor == 'true' && github.event.inputs.dry-run != 'true'
         run: |
-          echo "Capacitor plugin publishing is temporarily disabled"
-          # Original command:
-          # cd dist/capacitor && npm publish --access public
+          echo "Attempting to publish Capacitor plugin..."
+          echo "Input values:"
+          echo "publish-capacitor: '${{ github.event.inputs.publish-capacitor }}'"
+          echo "dry-run: '${{ github.event.inputs.dry-run }}'"
+          
+          # Find capacitor tarball
+          CAPACITOR_TARBALL=$(find dist -name "*capacitor*.tgz" | head -1)
+          if [ -n "$CAPACITOR_TARBALL" ]; then
+            echo "Found Capacitor tarball: $CAPACITOR_TARBALL"
+          fi
+          
+          if [ -d "dist/capacitor" ]; then
+            echo "dist/capacitor directory exists, publishing..."
+            cd dist/capacitor && npm publish --access public
+          else
+            echo "❌ Error: dist/capacitor directory not found. Build may have failed."
+            find dist -type d | sort
+            exit 1
+          fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       
       - name: Publish Cordova Plugin to NPM
-        if: ${{ (github.event_name == 'workflow_run' || github.event.inputs.publish-cordova == 'true') && github.event.inputs.dry-run != 'true' }}
+        # Use string conversion for boolean inputs in GitHub Actions
+        if: github.event.inputs.publish-cordova == 'true' && github.event.inputs.dry-run != 'true'
         run: |
           echo "Publishing Cordova plugin..."
-          cd dist/cordova && npm publish --access public
+          if [ -d "dist/cordova" ]; then
+            cd dist/cordova && npm publish --access public
+          else
+            echo "Error: Cordova plugin not built. Cannot publish."
+            exit 1
+          fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           
@@ -138,9 +254,9 @@ jobs:
         run: echo "✅ Dry run completed - packages were not published"
       
       - name: Capacitor Publish Status
-        if: ${{ false }}  # TEMPORARY: Disabled until Capacitor plugin is ready
-        run: echo "⚠️ Capacitor plugin publishing is temporarily disabled"
+        if: ${{ github.event.inputs.publish-capacitor == 'true' && github.event.inputs.dry-run != 'true' }}
+        run: echo "✅ Capacitor plugin published to npm registry"
       
-      - name: Temporary Note
-        run: |
-          echo "⚠️ NOTE: Capacitor plugin build and publishing are temporarily disabled until the plugin is ready"
+      - name: Cordova Publish Status
+        if: ${{ github.event.inputs.publish-cordova == 'true' && github.event.inputs.dry-run != 'true' }}
+        run: echo "✅ Cordova plugin published to npm registry"
