@@ -10,9 +10,18 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to publish (e.g., 4.0.1)'
-        required: true
+        description: 'Version to publish (leave empty to use current version)'
+        required: false
         default: ''
+      auto_bump:
+        description: 'Auto-bump version'
+        type: 'choice'
+        options:
+          - 'none'
+          - 'patch'
+          - 'minor'
+          - 'major'
+        default: 'none'
       publish-capacitor:
         description: 'Publish Capacitor plugin'
         type: boolean
@@ -32,11 +41,13 @@ jobs:
     if: github.event.workflow_run.conclusion == 'success' || github.event_name == 'release' || github.event_name == 'workflow_dispatch'
     
     permissions:
-      contents: read
+      contents: write # Needed for creating tags and commits
       packages: write
     
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Important to fetch git history for version tagging
       
       - name: Set up Node.js
         uses: actions/setup-node@v3
@@ -44,10 +55,39 @@ jobs:
           node-version: '20.x'
           registry-url: 'https://registry.npmjs.org'
 
+      - name: Set git identity for version commits
+        if: ${{ github.event.inputs.auto_bump != 'none' }}
+        run: |
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions@github.com"
+
       - name: Build artifacts if not triggered by workflow_run
         if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
         run: |
-          npm ci
+          npm install
+          
+          # Handle version management
+          if [ "${{ github.event.inputs.auto_bump }}" != "none" ]; then
+            # Auto-bump the version
+            echo "Auto-bumping version (${{ github.event.inputs.auto_bump }})..."
+            npm run version:${{ github.event.inputs.auto_bump }}
+            
+            # Extract the new version for tagging
+            NEW_VERSION=$(node -p "require('./package.json').version")
+            echo "Bumped to version: $NEW_VERSION"
+            
+            # Create a git tag and push changes
+            git add .
+            git commit -m "chore: bump version to $NEW_VERSION [skip ci]"
+            git tag -a "v$NEW_VERSION" -m "Release v$NEW_VERSION"
+            git push origin HEAD:${{ github.ref }} --tags
+            
+          elif [ -n "${{ github.event.inputs.version }}" ]; then
+            # Use the manually specified version
+            echo "Using specified version: ${{ github.event.inputs.version }}"
+            node scripts/sync-versions.js --version=${{ github.event.inputs.version }}
+          fi
+          
           npm run build:ts
           node scripts/prepare-capacitor.js
           node scripts/prepare-cordova.js
