@@ -40,8 +40,10 @@ function updatePluginXml(filePath, version) {
     }
 
     let content = fs.readFileSync(filePath, 'utf8');
-    // Update version in plugin.xml using regex
-    content = content.replace(/<plugin[^>]*version="[^"]*"/, `<plugin version="${version}"`);
+
+    // Only replace the version attribute value
+    content = content.replace(/(<plugin[^>]*\bversion=")[^"]*(")/, `$1${version}$2`);
+
     fs.writeFileSync(filePath, content);
     console.log(`✅ Updated ${path.relative(process.cwd(), filePath)} to version ${version}`);
 }

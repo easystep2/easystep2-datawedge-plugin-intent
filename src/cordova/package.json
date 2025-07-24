@@ -1,6 +1,6 @@
 {
   "name": "com-easystep2-datawedge-plugin-intent-cordova",
-  "version": "4.4.0",
+  "version": "4.4.1",
   "description": "Cordova plugin for Android Intents and Zebra DataWedge",
   "main": "www/IntentShim.js",
   "files": [
