@@ -42,11 +42,24 @@ jobs:
           node-version: '20.x'
           registry-url: 'https://registry.npmjs.org'
 
+      - name: Build artifacts if not triggered by workflow_run
+        if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
+        run: |
+          npm ci
+          npm run build:ts
+          node scripts/prepare-capacitor.js
+          node scripts/prepare-cordova.js
+          cd dist/capacitor && npm pack
+          cd ../cordova && npm pack
+
       - name: Download artifacts from build job
+        if: github.event_name == 'workflow_run'
         uses: actions/download-artifact@v4
         with:
           name: npm-packages
           path: dist
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
       
       - name: Display downloaded files
         run: ls -R dist
