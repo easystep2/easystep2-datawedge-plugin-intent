@@ -1,54 +1,109 @@
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
+const rimraf = require('rimraf');
 
-// Create dist/capacitor directory if it doesn't exist
-const capacitorDir = path.join(__dirname, '..', 'dist', 'capacitor');
-if (!fs.existsSync(capacitorDir)) {
-    fs.mkdirSync(capacitorDir, { recursive: true });
+// Paths
+const rootDir = path.join(__dirname, '..');
+const distDir = path.join(rootDir, 'dist');
+const capacitorDistDir = path.join(distDir, 'capacitor');
+const capacitorSrcDir = path.join(rootDir, 'capacitor');
+
+// Create directories if they don't exist
+if (!fs.existsSync(distDir)) {
+    fs.mkdirSync(distDir);
 }
 
-// Copy necessary files to dist/capacitor
-console.log('Copying files for Capacitor plugin...');
+if (!fs.existsSync(capacitorDistDir)) {
+    fs.mkdirSync(capacitorDistDir);
+} else {
+    // Clean the directory if it already exists
+    rimraf.sync(`${capacitorDistDir}/*`);
+}
 
-// Copy package.json and update it for publishing
-const packageJson = require('../package.json');
-const capacitorPackage = {
-    ...packageJson,
-    name: packageJson.name.replace('-dev', ''),
-    scripts: {
-        // Include only scripts relevant for the published package
-    },
-    devDependencies: undefined,
-    // Add any Capacitor-specific fields
-};
+// Copy package.json from the capacitor directory
+if (fs.existsSync(path.join(capacitorSrcDir, 'package.json'))) {
+    const capacitorPackageJson = require(path.join(capacitorSrcDir, 'package.json'));
+    // Ensure the version matches the root package.json
+    const rootPackageJson = require(path.join(rootDir, 'package.json'));
+    capacitorPackageJson.version = rootPackageJson.version;
 
-fs.writeFileSync(
-    path.join(capacitorDir, 'package.json'),
-    JSON.stringify(capacitorPackage, null, 2)
-);
+    fs.writeFileSync(
+        path.join(capacitorDistDir, 'package.json'),
+        JSON.stringify(capacitorPackageJson, null, 2)
+    );
+} else {
+    console.error('Error: package.json not found in capacitor directory');
+    process.exit(1);
+}
 
-// Copy other necessary files for Capacitor
-const filesToCopy = [
-    'README.md',
-    'LICENSE',
-    // Add other files needed for Capacitor
-];
-
-filesToCopy.forEach(file => {
-    if (fs.existsSync(path.join(__dirname, '..', file))) {
-        fs.copyFileSync(
-            path.join(__dirname, '..', file),
-            path.join(capacitorDir, file)
-        );
-    }
-});
+// Copy README and LICENSE
+try {
+    fs.copyFileSync(
+        path.join(rootDir, 'README.md'),
+        path.join(capacitorDistDir, 'README.md')
+    );
+    fs.copyFileSync(
+        path.join(rootDir, 'LICENSE'),
+        path.join(capacitorDistDir, 'LICENSE')
+    );
+} catch (err) {
+    console.warn('Warning: Could not copy README.md or LICENSE file', err);
+}
 
 // Copy dist files
-fs.cpSync(
-    path.join(__dirname, '..', 'dist', 'esm'),
-    path.join(capacitorDir, 'esm'),
-    { recursive: true }
-);
+fs.mkdirSync(path.join(capacitorDistDir, 'dist'));
+fs.mkdirSync(path.join(capacitorDistDir, 'dist', 'esm'), { recursive: true });
 
-console.log('Capacitor plugin preparation complete!');
+// Copy compiled JS files
+copyDirSync(path.join(distDir, 'esm'), path.join(capacitorDistDir, 'dist', 'esm'));
+fs.copyFileSync(
+    path.join(distDir, 'plugin.js'),
+    path.join(capacitorDistDir, 'dist', 'plugin.js')
+);
+if (fs.existsSync(path.join(distDir, 'plugin.js.map'))) {
+    fs.copyFileSync(
+        path.join(distDir, 'plugin.js.map'),
+        path.join(capacitorDistDir, 'dist', 'plugin.js.map')
+    );
+}
+
+// Copy Android platform files from capacitor directory
+if (fs.existsSync(path.join(capacitorSrcDir, 'android'))) {
+    copyDirSync(
+        path.join(capacitorSrcDir, 'android'),
+        path.join(capacitorDistDir, 'android')
+    );
+} else {
+    console.warn('Warning: android directory not found in capacitor directory');
+}
+
+// Copy hooks directory if it exists in capacitor directory
+if (fs.existsSync(path.join(capacitorSrcDir, 'hooks'))) {
+    copyDirSync(
+        path.join(capacitorSrcDir, 'hooks'),
+        path.join(capacitorDistDir, 'hooks')
+    );
+    console.log('✓ Copied hooks directory');
+}
+
+console.log('✅ Capacitor platform prepared successfully');
+
+// Helper function to copy directories recursively
+function copyDirSync(src, dest) {
+    if (!fs.existsSync(dest)) {
+        fs.mkdirSync(dest, { recursive: true });
+    }
+
+    const entries = fs.readdirSync(src, { withFileTypes: true });
+
+    for (const entry of entries) {
+        const srcPath = path.join(src, entry.name);
+        const destPath = path.join(dest, entry.name);
+
+        if (entry.isDirectory()) {
+            copyDirSync(srcPath, destPath);
+        } else {
+            fs.copyFileSync(srcPath, destPath);
+        }
+    }
+}

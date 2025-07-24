@@ -1,28 +1,38 @@
 {
   "name": "com-easystep2-datawedge-plugin-intent-cordova",
-  "version": "4.1.1",
-  "description": "Cordova plugin for Android Intents",
+  "version": "4.3.0",
+  "description": "Cordova plugin for Android Intents and Zebra DataWedge",
   "main": "www/IntentShim.js",
-  "types": "www/IntentShim.d.ts",
+  "files": [
+    "src/android",
+    "www",
+    "hooks",
+    "plugin.xml",
+    "README.md",
+    "LICENSE"
+  ],
   "author": "Easystep2",
   "license": "MIT",
-  "cordova": {
-    "id": "com-easystep2-datawedge-plugin-intent",
-    "platforms": [
-      "android"
-    ]
-  },
   "repository": {
     "type": "git",
-    "url": "https://github.com/easystep2/easystep2-datawedge-plugin-intent.git"
-  },
-  "bugs": {
-    "url": "https://github.com/easystep2/easystep2-datawedge-plugin-intent/issues"
+    "url": "git+https://github.com/easystep2/easystep2-datawedge-plugin-intent.git"
   },
   "keywords": [
     "cordova",
     "plugin",
+    "android",
     "intent",
-    "android"
-  ]
+    "datawedge",
+    "zebra",
+    "scanner",
+    "barcode",
+    "ecosystem:cordova",
+    "cordova-android"
+  ],
+  "cordova": {
+    "id": "com-easystep2-datawedge-plugin-intent-cordova",
+    "platforms": [
+      "android"
+    ]
+  }
 }

@@ -1,42 +1,40 @@
 {
-  "name": "com-easystep2-datawedge-plugin-intent",
+  "name": "com-easystep2-datawedge-plugin-intent-capacitor",
   "version": "4.1.1",
-  "description": "General purpose intent shim layer for cordova appliations on Android. Handles various techniques for sending and receiving intents. Android 14+ compatible.",
-  "main": "intentShim.js",
-  "cordova": {
-    "id": "com-easystep2-datawedge-plugin-intent",
-    "platforms": [
-      "android"
-    ]
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/easystep2/easystep2-datawedge-plugin-intent.git"
-  },
-  "keywords": [
-    "ecosystem:cordova",
-    "cordova-android",
-    "Intent",
-    "android14"
+  "description": "Capacitor plugin for Android Intents and Zebra DataWedge",
+  "main": "dist/plugin.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/esm/index.d.ts",
+  "unpkg": "dist/plugin.js",
+  "files": [
+    "android/src/main/",
+    "android/build.gradle",
+    "dist/",
+    "README.md"
   ],
   "author": "Easystep2",
   "license": "MIT",
-  "engines": {
-    "node": ">=10.0.0",
-    "npm": ">=6.0.0"
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/easystep2/easystep2-datawedge-plugin-intent.git"
   },
-  "cordovaDependencies": {
-    "3.0.0": {
-      "cordova-android": ">=9.0.0"
-    },
-    "4.0.0": {
-      "cordova-android": ">=10.0.0"
-    },
-    "5.0.0": {
-      "cordova-android": ">=12.0.0"
-    }
-  },
+  "keywords": [
+    "capacitor",
+    "plugin",
+    "native",
+    "android",
+    "intent",
+    "datawedge",
+    "zebra",
+    "scanner",
+    "barcode"
+  ],
   "peerDependencies": {
-    "cordova-android": ">=9.0.0"
+    "@capacitor/core": ">=4.0.0"
+  },
+  "capacitor": {
+    "android": {
+      "src": "android"
+    }
   }
 }

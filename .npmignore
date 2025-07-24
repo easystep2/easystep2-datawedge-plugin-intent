@@ -1,0 +1,27 @@
+# Development files
+.git/
+.github/
+.idea/
+.vscode/
+.DS_Store
+node_modules/
+src/__tests__/
+coverage/
+
+# Build process files
+tsconfig.json
+rollup.config.js
+.eslintrc
+.prettierrc
+tslint.json
+
+# Cordova project files that should not be packaged
+example/
+demo/
+
+# Temporary files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.temp/

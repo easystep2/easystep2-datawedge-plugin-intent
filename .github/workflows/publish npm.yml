@@ -23,75 +23,35 @@ on:
         default: false
 
 jobs:
-  build-and-publish:
+  publish:
+    needs: build
     runs-on: ubuntu-latest
     
     permissions:
-      contents: write
+      contents: read
       packages: write
     
     steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-      
-      - name: Display branch information
-        run: |
-          echo "Running on branch: ${{ github.ref_name }}"
-          echo "Repository: ${{ github.repository }}"
-          echo "Commit SHA: ${{ github.sha }}"
-      
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '20.x'
           registry-url: 'https://registry.npmjs.org'
-      
-      - name: Install dependencies
-        run: npm install
-      
-      - name: Update version if provided
-        if: github.event.inputs.version != ''
-        run: |
-          CURRENT_VERSION=$(node -p "require('./package.json').version")
-          echo "Current package version: $CURRENT_VERSION"
-          if [ "$CURRENT_VERSION" != "${{ github.event.inputs.version }}" ]; then
-            npm version ${{ github.event.inputs.version }} --no-git-tag-version
-            echo "Version updated to ${{ github.event.inputs.version }}"
-          else
-            echo "Version not changed (current version is already $CURRENT_VERSION)"
-          fi
 
-      - name: Build TypeScript
-        run: npm run build:ts
-        
-      - name: Prepare Capacitor Plugin
-        run: node scripts/prepare-capacitor.js
-        
-      - name: Prepare Cordova Plugin
-        run: node scripts/prepare-cordova.js
-      
-      - name: Create package tarballs
-        run: |
-          cd dist/capacitor && npm pack
-          cd ../cordova && npm pack
-          
-      # Upload tarballs as artifacts for verification
-      - name: Upload package tarballs
-        uses: actions/upload-artifact@v4
+      - name: Download Capacitor artifact
+        uses: actions/download-artifact@v4
         with:
-          name: npm-packages
-          path: |
-            dist/capacitor/*.tgz
-            dist/cordova/*.tgz
-        
-      # Add debug step to show input values
-      - name: Debug workflow inputs
-        run: |
-          echo "Input values:"
-          echo "dry-run: '${{ github.event.inputs.dry-run }}'"
-          echo "publish-capacitor: '${{ github.event.inputs.publish-capacitor }}'"
-          echo "publish-cordova: '${{ github.event.inputs.publish-cordova }}'"
+          name: capacitor-plugin
+          path: dist/capacitor
+
+      - name: Download Cordova artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: cordova-plugin
+          path: dist/cordova
+      
+      - name: Display downloaded files
+        run: ls -R dist
 
       - name: Publish Capacitor Plugin to NPM
         if: ${{ github.event.inputs.dry-run != 'true' && github.event.inputs.publish-capacitor == 'true' }}
@@ -111,11 +71,11 @@ jobs:
           
       # Provide feedback at the end
       - name: Publication Status
-        run: echo "Build and package creation completed"
+        run: echo "Publication process completed"
       
       - name: Dry Run Status
         if: github.event.inputs.dry-run == 'true'
-        run: echo "✅ Dry run completed - packages were created but not published"
+        run: echo "✅ Dry run completed - packages were not published"
       
       - name: Capacitor Publish Status
         if: github.event.inputs.dry-run == 'false' && github.event.inputs.publish-capacitor == 'true'

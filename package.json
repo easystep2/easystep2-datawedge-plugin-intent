@@ -8,12 +8,14 @@
     "prepare:capacitor": "node scripts/prepare-capacitor.js",
     "prepare:cordova": "node scripts/prepare-cordova.js",
     "build:capacitor": "npm run clean && npm run build:ts && npm run prepare:capacitor",
-    "build:cordova": "npm run clean && npm run build:ts && npm run prepare:cordova",
+    "build:cordova": "npm run clean && npm run prepare:cordova",
     "build": "npm run clean && npm run build:ts && npm run prepare:capacitor && npm run prepare:cordova",
     "test": "echo \"No tests specified\" && exit 0",
     "watch": "tsc --watch",
     "test:build:cordova": "npm run build:cordova && cd dist/cordova && npm pack",
-    "test:build": "npm run build && cd dist/cordova && npm pack && cd ../capacitor && npm pack"
+    "test:build:capacitor": "npm run build:capacitor && cd dist/capacitor && npm pack",
+    "test:build": "npm run build && cd dist/cordova && npm pack && cd ../capacitor && npm pack",
+    "prepublishOnly": "npm run build"
   },
   "repository": {
     "type": "git",
@@ -32,10 +34,23 @@
   ],
   "author": "Easystep2",
   "license": "MIT",
+  "files": [
+    "dist/",
+    "android/",
+    "src/",
+    "scripts/",
+    "capacitor/",
+    "plugin.xml",
+    "README.md",
+    "LICENSE"
+  ],
   "devDependencies": {
     "rimraf": "^3.0.2",
     "rollup": "^2.77.2",
     "typescript": "^5.8.3",
     "@capacitor/core": "^7.4.2"
+  },
+  "peerDependencies": {
+    "@capacitor/core": ">=4.0.0"
   }
 }
