@@ -1,6 +1,10 @@
 name: Publish to NPM
 
 on:
+  workflow_run:
+    workflows: ["Build Plugin"]
+    types:
+      - completed
   release:
     types: [created]
   workflow_dispatch:
@@ -24,8 +28,8 @@ on:
 
 jobs:
   publish:
-    needs: build
     runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success' || github.event_name == 'release' || github.event_name == 'workflow_dispatch'
     
     permissions:
       contents: read
@@ -38,34 +42,28 @@ jobs:
           node-version: '20.x'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Download Capacitor artifact
+      - name: Download artifacts from build job
         uses: actions/download-artifact@v4
         with:
-          name: capacitor-plugin
-          path: dist/capacitor
-
-      - name: Download Cordova artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: cordova-plugin
-          path: dist/cordova
+          name: npm-packages
+          path: dist
       
       - name: Display downloaded files
         run: ls -R dist
 
       - name: Publish Capacitor Plugin to NPM
-        if: ${{ github.event.inputs.dry-run != 'true' && github.event.inputs.publish-capacitor == 'true' }}
+        if: ${{ (github.event_name == 'workflow_run' || github.event.inputs.publish-capacitor == 'true') && github.event.inputs.dry-run != 'true' }}
         run: |
           echo "Publishing Capacitor plugin..."
-          cd dist/capacitor && npm publish
+          cd dist/capacitor && npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       
       - name: Publish Cordova Plugin to NPM
-        if: ${{ github.event.inputs.dry-run != 'true' && github.event.inputs.publish-cordova == 'true' }}
+        if: ${{ (github.event_name == 'workflow_run' || github.event.inputs.publish-cordova == 'true') && github.event.inputs.dry-run != 'true' }}
         run: |
           echo "Publishing Cordova plugin..."
-          cd dist/cordova && npm publish
+          cd dist/cordova && npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           
@@ -78,9 +76,9 @@ jobs:
         run: echo "✅ Dry run completed - packages were not published"
       
       - name: Capacitor Publish Status
-        if: github.event.inputs.dry-run == 'false' && github.event.inputs.publish-capacitor == 'true'
+        if: ${{ (github.event_name == 'workflow_run' || github.event.inputs.publish-capacitor == 'true') && github.event.inputs.dry-run != 'true' }}
         run: echo "✅ Capacitor plugin published to npm registry"
       
       - name: Cordova Publish Status
-        if: github.event.inputs.dry-run == 'false' && github.event.inputs.publish-cordova == 'true'
+        if: ${{ (github.event_name == 'workflow_run' || github.event.inputs.publish-cordova == 'true') && github.event.inputs.dry-run != 'true' }}
         run: echo "✅ Cordova plugin published to npm registry"
