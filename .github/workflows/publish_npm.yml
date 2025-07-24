@@ -25,7 +25,7 @@ on:
       publish-capacitor:
         description: 'Publish Capacitor plugin'
         type: boolean
-        default: true
+        default: false  # TEMPORARY: Changed default to false until Capacitor plugin is ready
       publish-cordova:
         description: 'Publish Cordova plugin'
         type: boolean
@@ -89,10 +89,16 @@ jobs:
           fi
           
           npm run build:ts
-          node scripts/prepare-capacitor.js
+          
+          # TEMPORARY: Capacitor build is commented out until it's ready
+          # node scripts/prepare-capacitor.js
+          
+          # Only build the Cordova plugin
           node scripts/prepare-cordova.js
-          cd dist/capacitor && npm pack
-          cd ../cordova && npm pack
+          
+          # TEMPORARY: Only package Cordova plugin
+          # cd dist/capacitor && npm pack
+          cd dist/cordova && npm pack
 
       - name: Download artifacts from build job
         if: github.event_name == 'workflow_run'
@@ -107,10 +113,11 @@ jobs:
         run: ls -R dist
 
       - name: Publish Capacitor Plugin to NPM
-        if: ${{ (github.event_name == 'workflow_run' || github.event.inputs.publish-capacitor == 'true') && github.event.inputs.dry-run != 'true' }}
+        if: ${{ false }}  # TEMPORARY: Disabled until Capacitor plugin is ready
         run: |
-          echo "Publishing Capacitor plugin..."
-          cd dist/capacitor && npm publish --access public
+          echo "Capacitor plugin publishing is temporarily disabled"
+          # Original command:
+          # cd dist/capacitor && npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       
@@ -131,9 +138,9 @@ jobs:
         run: echo "✅ Dry run completed - packages were not published"
       
       - name: Capacitor Publish Status
-        if: ${{ (github.event_name == 'workflow_run' || github.event.inputs.publish-capacitor == 'true') && github.event.inputs.dry-run != 'true' }}
-        run: echo "✅ Capacitor plugin published to npm registry"
+        if: ${{ false }}  # TEMPORARY: Disabled until Capacitor plugin is ready
+        run: echo "⚠️ Capacitor plugin publishing is temporarily disabled"
       
-      - name: Cordova Publish Status
-        if: ${{ (github.event_name == 'workflow_run' || github.event.inputs.publish-cordova == 'true') && github.event.inputs.dry-run != 'true' }}
-        run: echo "✅ Cordova plugin published to npm registry"
+      - name: Temporary Note
+        run: |
+          echo "⚠️ NOTE: Capacitor plugin build and publishing are temporarily disabled until the plugin is ready"

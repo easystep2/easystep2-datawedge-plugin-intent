@@ -9,17 +9,15 @@ This is an updated and maintained version of the original [darryncampbell-cordov
 
 ## Enhancements by EasyStep2
 - Fixed compatibility issues with Angular 14+
-- Maintained in two branches:
-  - **cordova**: For traditional Cordova applications
-  - **capacitor**: For Ionic Capacitor applications
+- Support for both Cordova and Capacitor in a single package
 - Regularly updated and maintained
 
 The original plugin badges are preserved for reference:
 
-[![Original npm version](http://img.shields.io/npm/v/com-darryncampbell-cordova-plugin-intent.svg?style=flat-square&label=original)](https://npmjs.org/package/com-darryncampbell-cordova-plugin-intent "View original project on npm")
-[![Original npm downloads](http://img.shields.io/npm/dm/com-darryncampbell-cordova-plugin-intent.svg?style=flat-square&label=original%20downloads)](https://npmjs.org/package/com-darryncampbell-cordova-plugin-intent "View original project on npm")
-[![Original npm total downloads](http://img.shields.io/npm/dt/com-darryncampbell-cordova-plugin-intent.svg?style=flat-square&label=original%20total)](https://npmjs.org/package/com-darryncampbell-cordova-plugin-intent "View original project on npm")
-[![Original npm licence](http://img.shields.io/npm/l/com-darryncampbell-cordova-plugin-intent.svg?style=flat-square&label=license)](https://npmjs.org/package/com-darryncampbell-cordova-plugin-intent "View original project on npm")
+[![Original npm version](http://img.shields.io/npm/v/com-darryncampbell-cordova-plugin-intent.svg?style=flat-square&label=original)](https://npmjs.org/package/com-darryncampbell/darryncampbell-cordova-plugin-intent "View original project on npm")
+[![Original npm downloads](http://img.shields.io/npm/dm/com-darryncampbell-cordova-plugin-intent.svg?style=flat-square&label=original%20downloads)](https://npmjs.org/package/com-darryncampbell/darryncampbell-cordova-plugin-intent "View original project on npm")
+[![Original npm total downloads](http://img.shields.io/npm/dt/com-darryncampbell-cordova-plugin-intent.svg?style=flat-square&label=original%20total)](https://npmjs.org/package/com-darryncampbell/darryncampbell-cordova-plugin-intent "View original project on npm")
+[![Original npm licence](http://img.shields.io/npm/l/com-darryncampbell-cordova-plugin-intent.svg?style=flat-square&label=license)](https://npmjs.org/package/com-darryncampbell/darryncampbell-cordova-plugin-intent "View original project on npm")
 
 Note: the original plugin was the underlying implementation for https://www.npmjs.com/package/@ionic-native/web-intent and https://ionicframework.com/docs/native/web-intent/
 
@@ -51,13 +49,95 @@ An example application is available at https://github.com/darryncampbell/plugin-
 
 ### Cordova
 ```bash
-cordova plugin add com.easystep2.datawedge.plugin.intent
+# Install from npm
+npm install com-easystep2-datawedge-plugin-intent-cordova
+cordova plugin add com-easystep2-datawedge-plugin-intent-cordova
+
+# Or install directly from GitHub
+cordova plugin add https://github.com/easystep2/easystep2-datawedge-plugin-intent.git
 ```
 
 ### Ionic Capacitor
 ```bash
-npm install com.easystep2.datawedge.plugin.intent
+# Install from npm
+npm install com-easystep2-datawedge-plugin-intent-capacitor
+
+# Or install directly from GitHub
+npm install https://github.com/easystep2/easystep2-datawedge-plugin-intent.git
+
+# Then sync your project
 npx cap sync
+```
+
+## Uninstallation
+
+### Cordova
+```bash
+cordova plugin remove com-easystep2-datawedge-plugin-intent-cordova
+npm uninstall com-easystep2-datawedge-plugin-intent-cordova
+```
+
+### Ionic Capacitor
+```bash
+npm uninstall com-easystep2-datawedge-plugin-intent-capacitor
+npx cap sync
+```
+
+## Package Architecture
+This project has been restructured to support both Cordova and Capacitor applications from a single codebase, with specific npm packages for each platform.
+
+### Support for Multiple Platforms
+The plugin provides:
+- `com-easystep2-datawedge-plugin-intent-cordova` for Cordova projects
+- `com-easystep2-datawedge-plugin-intent-capacitor` for Capacitor projects
+- Consistent API across both platforms
+- Simplified maintenance and updates
+
+### Migration from Previous Versions
+If you were previously using a different version:
+
+```bash
+# For Cordova projects
+cordova plugin remove com.easystep2.datawedge.plugin.intent
+npm uninstall com.easystep2.datawedge.plugin.intent
+npm install com-easystep2-datawedge-plugin-intent-cordova
+cordova plugin add com-easystep2-datawedge-plugin-intent-cordova
+
+# For Capacitor projects
+npm uninstall com.easystep2.datawedge.plugin.intent
+npm install com-easystep2-datawedge-plugin-intent-capacitor
+npx cap sync
+```
+
+## Version Bump Guidelines
+When bumping versions, follow semantic versioning:
+- **MAJOR**: Breaking changes
+- **MINOR**: New features without breaking changes
+- **PATCH**: Bug fixes without breaking changes
+
+## Troubleshooting
+
+### Common Issues
+- **Intent not firing**: Verify your broadcast receiver is properly registered
+- **Data not received**: Check your intent extras format and data types
+- **Conflicts with other plugins**: Install this plugin after other intent-related plugins
+- **Angular issues**: For Angular 14+, use version 2.x.x or later
+
+### DataWedge Specific Issues
+If you're using this plugin with Zebra DataWedge:
+- Ensure your DataWedge profile is configured correctly
+- Verify the intent output is enabled
+- Confirm the intent action and category match your registration
+
+### Platform-Specific Issues
+- **Cordova**: If you experience issues with older Cordova versions, check compatibility in the plugin.xml
+- **Capacitor**: For Capacitor 3+, ensure you're using plugin version 2.x.x or higher
+
+### Debug Mode
+Enable debug mode for more verbose logging:
+
+```javascript
+window.plugins.intentShim.setDebugMode(true);
 ```
 
 ## Supported Platforms
