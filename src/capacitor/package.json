@@ -21,13 +21,15 @@
   "keywords": [
     "capacitor",
     "plugin",
-    "native",
     "android",
     "intent",
     "datawedge",
     "zebra",
     "scanner",
-    "barcode"
+    "barcode",
+    "ecosystem:capacitor",
+    "capacitor-android",
+    "ionic"
   ],
   "peerDependencies": {
     "@capacitor/core": ">=4.0.0"

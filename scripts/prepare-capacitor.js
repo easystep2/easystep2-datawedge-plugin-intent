@@ -175,6 +175,23 @@ if (fs.existsSync(nestedDistDir)) {
     fs.rmSync(nestedDistDir, { recursive: true, force: true });
 }
 
+// Copy Capacitor-specific README.md
+console.log('Copying README.md...');
+const readmePath = path.join(srcCapacitorDir, 'README.md');
+if (fs.existsSync(readmePath)) {
+    fs.copyFileSync(readmePath, path.join(distCapacitorDir, 'README.md'));
+    console.log('- Copied Capacitor-specific README.md');
+} else {
+    // Fall back to the root README if the platform-specific one doesn't exist
+    const rootReadmePath = path.join(rootDir, 'README.md');
+    if (fs.existsSync(rootReadmePath)) {
+        fs.copyFileSync(rootReadmePath, path.join(distCapacitorDir, 'README.md'));
+        console.log('- Copied root README.md (platform-specific README not found)');
+    } else {
+        console.warn('⚠️ No README.md found to include in the package');
+    }
+}
+
 // Helper function to copy directory contents
 function copyDirContentsSync(src, dest) {
     if (!fs.existsSync(dest)) {
