@@ -657,21 +657,22 @@ public class IntentShim extends CordovaPlugin {
                     //noinspection deprecation
                     i.putExtra(key, Html.fromHtml(valueStr));
                 }
-            } else if (key.equals(Intent.EXTRA_STREAM)) {
-                // allows sharing of images as attachments.
-                // value in this case should be a URI of a file
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && valueStr.startsWith("file://"))
-                {
-                    Uri uriOfStream = remapUriWithFileProvider(valueStr, callbackContext);
-                    if (uriOfStream != null)
-                        i.putExtra(key, uriOfStream);
-                }
-                else
-                {
-                    //final CordovaResourceApi resourceApi = webView.getResourceApi();
-                    i.putExtra(key, resourceApi.remapUri(Uri.parse(valueStr)));
-                }
-            } else if (key.equals(Intent.EXTRA_EMAIL)) {
+            // } else if (key.equals(Intent.EXTRA_STREAM)) {
+            //     // allows sharing of images as attachments.
+            //     // value in this case should be a URI of a file
+            //     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && valueStr.startsWith("file://"))
+            //     {
+            //         Uri uriOfStream = remapUriWithFileProvider(valueStr, callbackContext);
+            //         if (uriOfStream != null)
+            //             i.putExtra(key, uriOfStream);
+            //     }
+            //     else
+            //     {
+            //         //final CordovaResourceApi resourceApi = webView.getResourceApi();
+            //         i.putExtra(key, resourceApi.remapUri(Uri.parse(valueStr)));
+            //     }
+            }
+             else if (key.equals(Intent.EXTRA_EMAIL)) {
                 // allows to add the email address of the receiver
                 i.putExtra(Intent.EXTRA_EMAIL, new String[] { valueStr });
             } else if (key.equals(Intent.EXTRA_KEY_EVENT)) {
