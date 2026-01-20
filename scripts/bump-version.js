@@ -3,7 +3,7 @@ const path = require('path');
 const { execSync } = require('child_process');
 
 // Define bump types
-const BUMP_TYPES = ['patch', 'minor', 'major'];
+const BUMP_TYPES = ['build', 'patch', 'minor', 'major'];
 
 function getCurrentVersion() {
     const packagePath = path.join(__dirname, '..', 'package.json');
@@ -19,8 +19,13 @@ function bumpVersion() {
     const currentVersion = getCurrentVersion();
     console.log(`Current version: ${currentVersion}`);
 
-    // Calculate new version using semver logic
-    const [major, minor, patch] = currentVersion.split('.').map(Number);
+    // Calculate new version
+    const versionParts = currentVersion.split('.');
+    const major = Number(versionParts[0]);
+    const minor = Number(versionParts[1]);
+    const patch = Number(versionParts[2]);
+    const build = versionParts.length > 3 ? Number(versionParts[3]) : -1;
+    
     let newVersion;
 
     switch (bumpType) {
@@ -30,7 +35,17 @@ function bumpVersion() {
         case 'minor':
             newVersion = `${major}.${minor + 1}.0`;
             break;
-        default:
+        case 'patch':
+            newVersion = `${major}.${minor}.${patch + 1}`;
+            break;
+        case 'build':
+            if (build >= 0) {
+                newVersion = `${major}.${minor}.${patch}.${build + 1}`;
+            } else {
+                newVersion = `${major}.${minor}.${patch}.1`;
+            }
+            break;
+        default: // 'patch' is the default from bumpType logic
             newVersion = `${major}.${minor}.${patch + 1}`;
     }
 

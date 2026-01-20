@@ -47,12 +47,12 @@
     "LICENSE"
   ],
   "devDependencies": {
+    "@capacitor/core": "^7.4.5",
+    "@rollup/plugin-commonjs": "^22.0.2",
+    "@rollup/plugin-node-resolve": "^13.3.0",
     "rimraf": "^3.0.2",
     "rollup": "^2.77.2",
-    "typescript": "^5.8.3",
-    "@capacitor/core": "^7.4.2",
-    "@rollup/plugin-node-resolve": "^13.3.0",
-    "@rollup/plugin-commonjs": "^22.0.2"
+    "typescript": "^5.8.3"
   },
   "peerDependencies": {
     "@capacitor/core": ">=4.0.0"
