@@ -671,7 +671,8 @@ public class IntentShim extends CordovaPlugin {
                     //final CordovaResourceApi resourceApi = webView.getResourceApi();
                     i.putExtra(key, resourceApi.remapUri(Uri.parse(valueStr)));
                 }
-            } else if (key.equals(Intent.EXTRA_EMAIL)) {
+            }
+             else if (key.equals(Intent.EXTRA_EMAIL)) {
                 // allows to add the email address of the receiver
                 i.putExtra(Intent.EXTRA_EMAIL, new String[] { valueStr });
             } else if (key.equals(Intent.EXTRA_KEY_EVENT)) {

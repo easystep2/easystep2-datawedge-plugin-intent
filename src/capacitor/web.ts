@@ -12,17 +12,17 @@ export class IntentShimWeb extends WebPlugin implements IntentShimPlugin {
 
     async registerBroadcastReceiver(options: { filterActions: string[] }): Promise<void> {
         this.log(`IntentShim Web: registerBroadcastReceiver with filters ${JSON.stringify(options.filterActions)}`);
-        throw this.unavailable('Not available in web environment');
+        throw this.unimplemented('Not available in web environment');
     }
 
     async unregisterBroadcastReceiver(): Promise<void> {
         this.log('IntentShim Web: unregisterBroadcastReceiver');
-        throw this.unavailable('Not available in web environment');
+        throw this.unimplemented('Not available in web environment');
     }
 
     async sendBroadcast(options: { action: string; extras?: any }): Promise<void> {
         this.log(`IntentShim Web: sendBroadcast ${options.action}`);
-        throw this.unavailable('Not available in web environment');
+        throw this.unimplemented('Not available in web environment');
     }
 
     async startActivity(options: { action: string; url?: string; type?: string; extras?: any }): Promise<void> {
@@ -32,24 +32,24 @@ export class IntentShimWeb extends WebPlugin implements IntentShimPlugin {
             window.open(options.url, '_blank');
             return;
         }
-        throw this.unavailable('Full intent functionality not available in web environment');
+        throw this.unimplemented('Full intent functionality not available in web environment');
     }
 
     async getIntent(): Promise<{ action: string; data: string; type: string; extras: any }> {
         this.log('IntentShim Web: getIntent');
-        throw this.unavailable('Not available in web environment');
+        throw this.unimplemented('Not available in web environment');
     }
 
     async startActivityForResult(options: {
         action: string; url?: string; type?: string; extras?: any; requestCode: number
     }): Promise<void> {
         this.log(`IntentShim Web: startActivityForResult ${options.action}`);
-        throw this.unavailable('Not available in web environment');
+        throw this.unimplemented('Not available in web environment');
     }
 
     async sendResult(options: { extras?: any; resultCode?: number }): Promise<void> {
         this.log(`IntentShim Web: sendResult with resultCode ${options.resultCode || 'none'} and extras ${JSON.stringify(options.extras || {})}`);
-        throw this.unavailable('Not available in web environment');
+        throw this.unimplemented('Not available in web environment');
     }
 
     onIntent(callback: (intent: IntentResult) => void): void {
