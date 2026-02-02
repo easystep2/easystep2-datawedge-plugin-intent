@@ -91,67 +91,73 @@ public class IntentShimPlugin extends Plugin {
         }
     }
 
-    @ActivityCallback
-    private void activityResult(PluginCall call, ActivityResult result) {
-        if (call == null) {
-            return;
-        }
-        Intent intent = result.getData();
-        JSObject intentJson = getIntentJson(intent);
-        intentJson.put("requestCode", result.getRequestCode());
-        intentJson.put("resultCode", result.getResultCode());
-        call.resolve(intentJson);
+    @Override
+    protected void handleOnActivityResult(int requestCode, int resultCode, Intent data) {
+        PluginCall call = getSavedCall();
+        if (call == null) return;
+    
+        JSObject result = getIntentJson(data);
+        result.put("requestCode", requestCode);
+        result.put("resultCode", resultCode);
+        call.resolve(result);
     }
 
-    @PluginMethod(returnType = PluginMethod.RETURN_CALLBACK)
-    public void registerBroadcastReceiver(PluginCall call) {
-        call.setKeepAlive(true);
 
-        JSObject filters = call.getData();
-        JSONArray filterActions = filters.getArray("filterActions");
+@PluginMethod(returnType = PluginMethod.RETURN_CALLBACK)
+public void registerBroadcastReceiver(PluginCall call) {
+    call.setKeepAlive(true);
+    JSObject filters = call.getData();
 
-        if (filterActions == null || filterActions.length() == 0) {
-            call.reject("filterActions argument is required.");
-            return;
-        }
-
-        IntentFilter filter = new IntentFilter();
-        try {
-            for (int i = 0; i < filterActions.length(); i++) {
-                filter.addAction(filterActions.getString(i));
-            }
-
-            JSONArray filterCategories = filters.getArray("filterCategories");
-            if (filterCategories != null) {
-                for (int i = 0; i < filterCategories.length(); i++) {
-                    filter.addCategory(filterCategories.getString(i));
-                }
-            }
-
-            JSONArray filterDataSchemes = filters.getArray("filterDataSchemes");
-            if (filterDataSchemes != null) {
-                for (int i = 0; i < filterDataSchemes.length(); i++) {
-                    filter.addDataScheme(filterDataSchemes.getString(i));
-                }
-            }
-        } catch (JSONException e) {
-            call.reject("Error parsing filters: " + e.getMessage());
-            return;
-        }
-
-        BroadcastReceiver receiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                PluginCall savedCall = receiverCalls.get(this);
-                if (savedCall != null) {
-                    savedCall.resolve(getIntentJson(intent));
-                }
-            }
-        };
-
-        getContext().registerReceiver(receiver, filter);
-        receiverCalls.put(receiver, call);
+    JSONArray filterActions;
+    Object actions = filters.get("filterActions");
+    if (actions instanceof JSONArray) {
+        filterActions = (JSONArray) actions;
+    } else {
+        call.reject("filterActions must be an array");
+        return;
     }
+
+    IntentFilter intentFilter = new IntentFilter();
+    try {
+        for (int i = 0; i < filterActions.length(); i++) {
+            intentFilter.addAction(filterActions.getString(i));
+        }
+
+        Object categories = filters.get("filterCategories");
+        if (categories instanceof JSONArray) {
+            JSONArray filterCategories = (JSONArray) categories;
+            for (int i = 0; i < filterCategories.length(); i++) {
+                intentFilter.addCategory(filterCategories.getString(i));
+            }
+        }
+
+        Object dataSchemes = filters.get("filterDataSchemes");
+        if (dataSchemes instanceof JSONArray) {
+            JSONArray filterDataSchemes = (JSONArray) dataSchemes;
+            for (int i = 0; i < filterDataSchemes.length(); i++) {
+                intentFilter.addDataScheme(filterDataSchemes.getString(i));
+            }
+        }
+
+    } catch (JSONException e) {
+        call.reject("Error parsing filters: " + e.getMessage());
+        return;
+    }
+
+    BroadcastReceiver receiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            PluginCall savedCall = receiverCalls.get(this);
+            if (savedCall != null) {
+                savedCall.resolve(getIntentJson(intent));
+            }
+        }
+    };
+
+    getContext().registerReceiver(receiver, intentFilter);
+    receiverCalls.put(receiver, call);
+}
+
 
     @PluginMethod
     public void unregisterBroadcastReceiver(PluginCall call) {
