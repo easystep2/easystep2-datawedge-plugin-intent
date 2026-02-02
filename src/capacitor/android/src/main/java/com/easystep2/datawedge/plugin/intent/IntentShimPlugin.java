@@ -209,6 +209,13 @@ public class IntentShimPlugin extends Plugin {
         }
     }
 
+    @PluginMethod
+    public void setDebugMode(PluginCall call) {
+        boolean enabled = call.getBoolean("enabled", false);
+        Log.d(LOG_TAG, "Debug mode " + (enabled ? "enabled" : "disabled"));
+        call.resolve();
+    }
+
     private Intent populateIntent(JSObject obj) throws JSONException {
         Intent intent = new Intent();
 
