@@ -1,8 +1,10 @@
 import { registerPlugin } from '@capacitor/core';
 import type { IntentShimPlugin } from './definitions';
 
-// Register the plugin
-const IntentShim = registerPlugin<IntentShimPlugin>('IntentShim');
+// Register the plugin with web fallback
+const IntentShim = registerPlugin<IntentShimPlugin>('IntentShim', {
+  web: () => import('./web').then(m => new m.IntentShimWeb()),
+});
 
 // Export constants for direct usage in client code, matching the Cordova plugin's API
 export const ACTION_SEND = 'android.intent.action.SEND';
