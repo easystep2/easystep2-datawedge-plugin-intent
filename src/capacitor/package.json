@@ -1,6 +1,6 @@
 {
   "name": "com-easystep2-datawedge-plugin-intent-capacitor",
-  "version": "5.1.1",
+  "version": "5.2.0",
   "description": "Capacitor plugin for Android Intents and Zebra DataWedge",
   "main": "plugin.js",
   "module": "esm/index.js",
