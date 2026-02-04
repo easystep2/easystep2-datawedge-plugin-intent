@@ -91,24 +91,26 @@ public class IntentShimPlugin extends Plugin {
         }
     }
 
-    @ActivityCallback
-    private void activityResult(PluginCall call, ActivityResult result) {
-        if (call == null) {
-            return;
-        }
-        Intent intent = result.getData();
-        JSObject intentJson = getIntentJson(intent);
-        intentJson.put("requestCode", result.getRequestCode());
-        intentJson.put("resultCode", result.getResultCode());
-        call.resolve(intentJson);
-    }
+@ActivityCallback
+private void activityResult(PluginCall call, int resultCode, Intent data) {
+    JSObject intentJson = getIntentJson(data);
+    intentJson.put("requestCode", call.getInt("requestCode", 1));
+    intentJson.put("resultCode", resultCode);
+    call.resolve(intentJson);
+}
 
     @PluginMethod(returnType = PluginMethod.RETURN_CALLBACK)
     public void registerBroadcastReceiver(PluginCall call) {
         call.setKeepAlive(true);
 
         JSObject filters = call.getData();
-        JSONArray filterActions = filters.getArray("filterActions");
+        JSONArray filterActions = new JSONArray();
+        if (filters.has("filterActions")) {
+            Object obj = filters.opt("filterActions");
+            if (obj instanceof JSONArray) {
+                filterActions = (JSONArray) obj;
+            }
+        }
 
         if (filterActions == null || filterActions.length() == 0) {
             call.reject("filterActions argument is required.");
@@ -121,14 +123,26 @@ public class IntentShimPlugin extends Plugin {
                 filter.addAction(filterActions.getString(i));
             }
 
-            JSONArray filterCategories = filters.getArray("filterCategories");
+            JSONArray filterCategories = new JSONArray();
+            if (filters.has("filterCategories")) {
+                Object obj = filters.opt("filterCategories");
+                if (obj instanceof JSONArray) {
+                    filterCategories = (JSONArray) obj;
+                }
+            }
             if (filterCategories != null) {
                 for (int i = 0; i < filterCategories.length(); i++) {
                     filter.addCategory(filterCategories.getString(i));
                 }
             }
 
-            JSONArray filterDataSchemes = filters.getArray("filterDataSchemes");
+            JSONArray filterDataSchemes = new JSONArray();
+            if (filters.has("filterDataSchemes")) {
+                Object obj = filters.opt("filterDataSchemes");
+                if (obj instanceof JSONArray) {
+                    filterDataSchemes = (JSONArray) obj;
+                }
+            }
             if (filterDataSchemes != null) {
                 for (int i = 0; i < filterDataSchemes.length(); i++) {
                     filter.addDataScheme(filterDataSchemes.getString(i));
@@ -142,15 +156,18 @@ public class IntentShimPlugin extends Plugin {
         BroadcastReceiver receiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                PluginCall savedCall = receiverCalls.get(this);
-                if (savedCall != null) {
-                    savedCall.resolve(getIntentJson(intent));
-                }
+                JSObject intentJson = getIntentJson(intent);
+                notifyListeners("onIntent", intentJson);
             }
         };
 
-        getContext().registerReceiver(receiver, filter);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            getContext().registerReceiver(receiver, filter, Context.RECEIVER_EXPORTED);
+        } else {
+            getContext().registerReceiver(receiver, filter);
+        }
         receiverCalls.put(receiver, call);
+        call.resolve();
     }
 
     @PluginMethod
@@ -207,13 +224,6 @@ public class IntentShimPlugin extends Plugin {
         } catch (PackageManager.NameNotFoundException e) {
             call.resolve(new JSObject().put("exists", false));
         }
-    }
-
-    @PluginMethod
-    public void setDebugMode(PluginCall call) {
-        boolean enabled = call.getBoolean("enabled", false);
-        Log.d(LOG_TAG, "Debug mode " + (enabled ? "enabled" : "disabled"));
-        call.resolve();
     }
 
     private Intent populateIntent(JSObject obj) throws JSONException {
