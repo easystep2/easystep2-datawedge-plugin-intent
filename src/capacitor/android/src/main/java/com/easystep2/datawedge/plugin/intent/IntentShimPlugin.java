@@ -91,73 +91,84 @@ public class IntentShimPlugin extends Plugin {
         }
     }
 
-    @Override
-    protected void handleOnActivityResult(int requestCode, int resultCode, Intent data) {
-        PluginCall call = getSavedCall();
-        if (call == null) return;
-    
-        JSObject result = getIntentJson(data);
-        result.put("requestCode", requestCode);
-        result.put("resultCode", resultCode);
-        call.resolve(result);
-    }
-
-
-@PluginMethod(returnType = PluginMethod.RETURN_CALLBACK)
-public void registerBroadcastReceiver(PluginCall call) {
-    call.setKeepAlive(true);
-    JSObject filters = call.getData();
-
-    JSONArray filterActions;
-    Object actions = filters.get("filterActions");
-    if (actions instanceof JSONArray) {
-        filterActions = (JSONArray) actions;
-    } else {
-        call.reject("filterActions must be an array");
-        return;
-    }
-
-    IntentFilter intentFilter = new IntentFilter();
-    try {
-        for (int i = 0; i < filterActions.length(); i++) {
-            intentFilter.addAction(filterActions.getString(i));
-        }
-
-        Object categories = filters.get("filterCategories");
-        if (categories instanceof JSONArray) {
-            JSONArray filterCategories = (JSONArray) categories;
-            for (int i = 0; i < filterCategories.length(); i++) {
-                intentFilter.addCategory(filterCategories.getString(i));
-            }
-        }
-
-        Object dataSchemes = filters.get("filterDataSchemes");
-        if (dataSchemes instanceof JSONArray) {
-            JSONArray filterDataSchemes = (JSONArray) dataSchemes;
-            for (int i = 0; i < filterDataSchemes.length(); i++) {
-                intentFilter.addDataScheme(filterDataSchemes.getString(i));
-            }
-        }
-
-    } catch (JSONException e) {
-        call.reject("Error parsing filters: " + e.getMessage());
-        return;
-    }
-
-    BroadcastReceiver receiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            PluginCall savedCall = receiverCalls.get(this);
-            if (savedCall != null) {
-                savedCall.resolve(getIntentJson(intent));
-            }
-        }
-    };
-
-    getContext().registerReceiver(receiver, intentFilter);
-    receiverCalls.put(receiver, call);
+@ActivityCallback
+private void activityResult(PluginCall call, int resultCode, Intent data) {
+    JSObject intentJson = getIntentJson(data);
+    intentJson.put("requestCode", call.getInt("requestCode", 1));
+    intentJson.put("resultCode", resultCode);
+    call.resolve(intentJson);
 }
 
+    @PluginMethod(returnType = PluginMethod.RETURN_CALLBACK)
+    public void registerBroadcastReceiver(PluginCall call) {
+        call.setKeepAlive(true);
+
+        JSObject filters = call.getData();
+        JSONArray filterActions = new JSONArray();
+        if (filters.has("filterActions")) {
+            Object obj = filters.opt("filterActions");
+            if (obj instanceof JSONArray) {
+                filterActions = (JSONArray) obj;
+            }
+        }
+
+        if (filterActions == null || filterActions.length() == 0) {
+            call.reject("filterActions argument is required.");
+            return;
+        }
+
+        IntentFilter filter = new IntentFilter();
+        try {
+            for (int i = 0; i < filterActions.length(); i++) {
+                filter.addAction(filterActions.getString(i));
+            }
+
+            JSONArray filterCategories = new JSONArray();
+            if (filters.has("filterCategories")) {
+                Object obj = filters.opt("filterCategories");
+                if (obj instanceof JSONArray) {
+                    filterCategories = (JSONArray) obj;
+                }
+            }
+            if (filterCategories != null) {
+                for (int i = 0; i < filterCategories.length(); i++) {
+                    filter.addCategory(filterCategories.getString(i));
+                }
+            }
+
+            JSONArray filterDataSchemes = new JSONArray();
+            if (filters.has("filterDataSchemes")) {
+                Object obj = filters.opt("filterDataSchemes");
+                if (obj instanceof JSONArray) {
+                    filterDataSchemes = (JSONArray) obj;
+                }
+            }
+            if (filterDataSchemes != null) {
+                for (int i = 0; i < filterDataSchemes.length(); i++) {
+                    filter.addDataScheme(filterDataSchemes.getString(i));
+                }
+            }
+        } catch (JSONException e) {
+            call.reject("Error parsing filters: " + e.getMessage());
+            return;
+        }
+
+        BroadcastReceiver receiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                JSObject intentJson = getIntentJson(intent);
+                notifyListeners("onIntent", intentJson);
+            }
+        };
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            getContext().registerReceiver(receiver, filter, Context.RECEIVER_EXPORTED);
+        } else {
+            getContext().registerReceiver(receiver, filter);
+        }
+        receiverCalls.put(receiver, call);
+        call.resolve();
+    }
 
     @PluginMethod
     public void unregisterBroadcastReceiver(PluginCall call) {
@@ -347,6 +358,9 @@ public void registerBroadcastReceiver(PluginCall call) {
                 bundle.putDouble(key, (Double) value);
             } else if (value instanceof JSObject) {
                 bundle.putBundle(key, toBundle((JSObject) value));
+            } else if (value instanceof JSONObject) {
+                // Handle nested JSONObject (obj.get() returns JSONObject, not JSObject)
+                bundle.putBundle(key, toBundle(new JSObject(((JSONObject) value).toString())));
             } else if (value instanceof JSONArray) {
                 // This part is complex; simplified for common cases
                 // For DataWedge, string arrays or parcelable arrays are common
