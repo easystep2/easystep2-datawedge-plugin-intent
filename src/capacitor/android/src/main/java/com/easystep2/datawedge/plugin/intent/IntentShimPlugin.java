@@ -358,6 +358,9 @@ private void activityResult(PluginCall call, int resultCode, Intent data) {
                 bundle.putDouble(key, (Double) value);
             } else if (value instanceof JSObject) {
                 bundle.putBundle(key, toBundle((JSObject) value));
+            } else if (value instanceof JSONObject) {
+                // Handle nested JSONObject (obj.get() returns JSONObject, not JSObject)
+                bundle.putBundle(key, toBundle(new JSObject(((JSONObject) value).toString())));
             } else if (value instanceof JSONArray) {
                 // This part is complex; simplified for common cases
                 // For DataWedge, string arrays or parcelable arrays are common
