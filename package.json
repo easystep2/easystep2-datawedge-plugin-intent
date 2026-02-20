@@ -1,6 +1,6 @@
 {
   "name": "com-easystep2-datawedge-plugin-intent",
-  "version": "5.2.0",
+  "version": "5.2.1",
   "description": "Capacitor and Cordova plugins for Android Intents",
   "scripts": {
     "clean": "rimraf dist",
