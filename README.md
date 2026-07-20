@@ -11,6 +11,19 @@ This is an updated and maintained version of the original [darryncampbell-cordov
 - Fixed compatibility issues with Angular 14+
 - Support for both Cordova and Capacitor in a single package
 - Regularly updated and maintained
+- Capacitor **6.0.0**: fully typed API (`addListener('onIntent', …)`), ES2017 +
+  `strict` TypeScript, and Android 13+ `RECEIVER_EXPORTED` support
+
+### Package version lines
+The Cordova and Capacitor packages are versioned independently:
+
+| Package | npm | Line |
+| --- | --- | --- |
+| Capacitor | `com-easystep2-datawedge-plugin-intent-capacitor` | **6.x** |
+| Cordova | `com-easystep2-datawedge-plugin-intent-cordova` | **4.x** |
+
+Capacitor 6.0.0 contains **breaking** changes (`packageExists({ packageName })`,
+removal of `setDebugMode`) — see the [Capacitor README](src/capacitor/README.md#migration-from-5x).
 
 The original plugin badges are preserved for reference:
 
@@ -30,6 +43,24 @@ If you are installing this plugin along with cordova-plugin-camera you **MUST in
 
 # Overview
 This Cordova plugin provides a general purpose shim layer for the Android intent mechanism, exposing various ways to handle sending and receiving intents.
+
+At a high level, the plugin registers a native `BroadcastReceiver` and forwards any
+matching intents (such as Zebra DataWedge barcode scans and API results) up to your
+JavaScript layer:
+
+```mermaid
+sequenceDiagram
+    participant DW as Zebra DataWedge
+    participant BR as Native BroadcastReceiver
+    participant Plugin as IntentShim
+    participant App as Your app
+
+    App->>Plugin: registerBroadcastReceiver(filterActions)
+    Note over BR: Android registers the receiver<br/>(RECEIVER_EXPORTED on Android 13+)
+    DW-->>BR: Broadcast intent (scan / API result)
+    BR->>Plugin: onReceive(intent)
+    Plugin-->>App: onIntent event (Capacitor)<br/>or callback (Cordova)
+```
 
 ## Credits
 This project is based on code released under the following MIT projects:
@@ -86,6 +117,24 @@ npx cap sync
 ## Package Architecture
 This project has been restructured to support both Cordova and Capacitor applications from a single codebase, with specific npm packages for each platform.
 
+```mermaid
+graph TD
+    subgraph src["Single codebase (this repo)"]
+        CAP_TS["src/capacitor · TypeScript"]
+        CAP_JAVA["Capacitor IntentShimPlugin.java"]
+        COR_JS["src/cordova · JavaScript"]
+        COR_JAVA["Cordova IntentShim.java"]
+    end
+
+    CAP_TS --> PKG_CAP["npm: ...-capacitor (6.x)"]
+    CAP_JAVA --> PKG_CAP
+    COR_JS --> PKG_COR["npm: ...-cordova (4.x)"]
+    COR_JAVA --> PKG_COR
+
+    PKG_CAP --> APP_CAP["Capacitor / Ionic app"]
+    PKG_COR --> APP_COR["Cordova app"]
+```
+
 ### Support for Multiple Platforms
 The plugin provides:
 - `com-easystep2-datawedge-plugin-intent-cordova` for Cordova projects
@@ -133,12 +182,9 @@ If you're using this plugin with Zebra DataWedge:
 - **Cordova**: If you experience issues with older Cordova versions, check compatibility in the plugin.xml
 - **Capacitor**: For Capacitor 3+, ensure you're using plugin version 2.x.x or higher
 
-### Debug Mode
-Enable debug mode for more verbose logging:
-
-```javascript
-window.plugins.intentShim.setDebugMode(true);
-```
+### Verbose logging
+This plugin logs to Android `logcat` under the `IntentShimPlugin` (Capacitor) and
+`IntentShim` (Cordova) tags. Filter logcat by those tags when diagnosing intent flow.
 
 ## Supported Platforms
 - Android
@@ -209,7 +255,7 @@ The `intentShim.sendBroadcast` function sends an Android broadcast intent with a
 
 Send a broadcast intent to a specified action that contains a random number in the extras
 
-    window.plugins.intentShim.startActivity(
+    window.plugins.intentShim.sendBroadcast(
         {
             action: "com.easystep2.datawedge.plugin.intent.ACTION",
             extras: {
@@ -217,7 +263,7 @@ Send a broadcast intent to a specified action that contains a random number in t
             }
         },
         function() {},
-        function() {alert('Failed to open URL via Android Intent')}
+        function() {alert('Failed to send broadcast via Android Intent')}
     );
 
 

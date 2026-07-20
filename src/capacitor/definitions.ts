@@ -1,15 +1,30 @@
-export interface IntentShimPlugin {
-    // Core Intent functionality
-    registerBroadcastReceiver(options: { filterActions: string[] }): Promise<void>;
-    unregisterBroadcastReceiver(): Promise<void>;
-    sendBroadcast(options: { action: string; extras?: any }): Promise<void>;
-    startActivity(options: { action: string; url?: string; type?: string; extras?: any }): Promise<void>;
-    getIntent(): Promise<{ action: string; data: string; type: string; extras: any }>;
-    startActivityForResult(options: { action: string; url?: string; type?: string; extras?: any; requestCode: number }): Promise<void>;
-    sendResult(options: { extras?: any; resultCode?: number }): Promise<void>;
-    onIntent(callback: (intent: { action: string; data: string; type: string; extras: any }) => void): void;
-    packageExists(packageName: string): Promise<{ exists: boolean }>;
-    setDebugMode(options: { enabled: boolean }): Promise<void>;
+import type { PluginListenerHandle } from '@capacitor/core';
+
+/** A component target (package + class) for an explicit Intent. */
+export interface IntentComponent {
+    package: string;
+    class: string;
+}
+
+/** Options shared by startActivity / startActivityForResult / sendBroadcast. */
+export interface IntentOptions {
+    action?: string;
+    url?: string;
+    type?: string;
+    /** Restrict the intent to a specific package. */
+    package?: string;
+    /** Target an explicit component (package + class). */
+    component?: IntentComponent;
+    /** Android intent flags to OR together. */
+    flags?: number[];
+    extras?: Record<string, any>;
+}
+
+/** Options for registering an Android BroadcastReceiver. */
+export interface BroadcastReceiverOptions {
+    filterActions: string[];
+    filterCategories?: string[];
+    filterDataSchemes?: string[];
 }
 
 // Intent response type
@@ -17,8 +32,35 @@ export interface IntentResult {
     action: string;
     data: string;
     type: string;
+    package?: string;
+    component?: string;
     extras: any;
     requestCode?: number;
+    resultCode?: number;
+}
+
+export interface IntentShimPlugin {
+    // Core Intent functionality
+    registerBroadcastReceiver(options: BroadcastReceiverOptions): Promise<void>;
+    unregisterBroadcastReceiver(): Promise<void>;
+    sendBroadcast(options: IntentOptions): Promise<void>;
+    startActivity(options: IntentOptions): Promise<void>;
+    getIntent(): Promise<IntentResult>;
+    startActivityForResult(options: IntentOptions & { requestCode: number }): Promise<IntentResult>;
+    sendResult(options: { extras?: any; resultCode?: number }): Promise<void>;
+    packageExists(options: { packageName: string }): Promise<{ exists: boolean }>;
+
+    /**
+     * Listen for intents delivered by a registered BroadcastReceiver
+     * (e.g. Zebra DataWedge scans and API result actions).
+     */
+    addListener(
+        eventName: 'onIntent',
+        listenerFunc: (intent: IntentResult) => void,
+    ): Promise<PluginListenerHandle>;
+
+    /** Remove all registered `onIntent` listeners. */
+    removeAllListeners(): Promise<void>;
 }
 
 // Constants that match the Android implementation

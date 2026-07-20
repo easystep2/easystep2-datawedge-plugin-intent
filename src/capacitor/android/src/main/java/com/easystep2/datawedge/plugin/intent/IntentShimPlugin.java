@@ -213,9 +213,9 @@ private void activityResult(PluginCall call, int resultCode, Intent data) {
 
     @PluginMethod
     public void packageExists(PluginCall call) {
-        String packageName = call.getString("package");
+        String packageName = call.getString("packageName");
         if (packageName == null) {
-            call.reject("package argument is required");
+            call.reject("packageName argument is required");
             return;
         }
         try {

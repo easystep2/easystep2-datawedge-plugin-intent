@@ -2,6 +2,11 @@
 
 A Cordova plugin for Android Intents that integrates with Zebra DataWedge.
 
+> The Cordova package is maintained on its own **4.x** line, in parallel with the
+> Capacitor package (**6.x**). The two share the same DataWedge feature set; only the
+> JavaScript calling convention differs (Cordova uses positional success/error
+> callbacks, Capacitor uses promises + `addListener`).
+
 ## Installation
 
 ```bash
@@ -11,6 +16,27 @@ cordova plugin add com-easystep2-datawedge-plugin-intent-cordova
 ## Platforms
 
 - Android
+
+## How it works
+
+The Cordova API uses positional success/error callbacks. You register a broadcast
+receiver, and its callback fires for every matching intent (scans, API results):
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant App
+    participant Shim as window.plugins.intentShim
+    participant DW as Zebra DataWedge
+
+    App->>Shim: registerBroadcastReceiver(filters, onReceive, ok, err)
+    App->>Shim: sendBroadcast(CREATE_PROFILE, ok, err)
+    App->>Shim: sendBroadcast(GET_ACTIVE_PROFILE, ok, err)
+    DW-->>Shim: RESULT_ACTION (active profile)
+    Shim-->>App: onReceive(intent)
+    DW-->>Shim: data_string (barcode scan)
+    Shim-->>App: onReceive(intent)
+```
 
 ## Usage
 
@@ -86,7 +112,7 @@ function sendError(error) {
 - `startActivityForResult(options, onSuccess, onError)`
 - `sendResult(options, onSuccess, onError)`
 - `packageExists(packageName, onSuccess, onError)`
-- `setDebugMode(enabled, onSuccess, onError)`
+- `onIntent(callback)`
 
 #### Constants
 
